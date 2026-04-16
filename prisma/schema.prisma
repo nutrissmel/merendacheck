@@ -1,0 +1,432 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Tenant {
+  id                   String      @id @default(uuid())
+  nome                 String
+  codigoIbge           String      @unique
+  estado               String
+  logoUrl              String?
+  nomeSecretaria       String?
+  telefone             String?
+  emailInstitucional   String?
+  website              String?
+  cnpj                 String?
+  // Billing
+  plano                Plano       @default(STARTER)
+  planoStatus          PlanoStatus @default(TRIAL)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  trialExpiresAt       DateTime?
+  // Integrações
+  apiKey               String?     @unique
+  webhookUrl           String?
+  webhookEventos       String[]    @default([])
+  webhookAtivo         Boolean     @default(false)
+  // Notificações globais
+  notifNcCritica       Boolean     @default(true)
+  notifInspecaoReprovada Boolean   @default(true)
+  notifSemInspecaoDias Int         @default(7)
+  notifRelatorioMensal Boolean     @default(true)
+  notifEmailAdmin      Boolean     @default(true)
+  notifEmailNutricionista Boolean  @default(true)
+  notifReplyTo         String?
+  ativo                Boolean     @default(true)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  escolas              Escola[]
+  usuarios             Usuario[]
+  checklistModelos     ChecklistModelo[]
+  agendamentos         Agendamento[]
+  logsAuditoria        LogAuditoria[]
+  @@map("tenants")
+}
+
+model Escola {
+  id           String   @id @default(uuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  nome         String
+  codigoInep   String?
+  endereco     String?
+  bairro       String?
+  cidade       String?
+  cep          String?
+  numeroAlunos Int      @default(0)
+  turnos       Turno[]
+  ativa        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  usuariosEscola UsuarioEscola[]
+  inspecoes      Inspecao[]
+  agendamentos   Agendamento[]
+  @@map("escolas")
+}
+
+model Usuario {
+  id             String   @id @default(uuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  supabaseUserId String   @unique
+  nome           String
+  email          String
+  papel          Papel
+  ativo          Boolean  @default(true)
+  primeiroAcesso Boolean  @default(true)
+  // 2FA
+  doisFatoresAtivo   Boolean  @default(false)
+  doisFatoresSegredo String?
+  codigosRecuperacao String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  escolas              UsuarioEscola[]
+  inspecoesRealizadas  Inspecao[]      @relation("InspetorRelation")
+  acoesResponsavel     AcaoCorretiva[] @relation("ResponsavelRelation")
+  convitesEnviados     Convite[]
+  notificacoes         Notificacao[]
+  pushSubscriptions    PushSubscription[]
+  preferenciasNotif    PreferenciaNotificacao?
+  logsAuditoria        LogAuditoria[]
+  @@unique([email, tenantId])
+  @@map("usuarios")
+}
+
+model UsuarioEscola {
+  id        String  @id @default(uuid())
+  usuarioId String
+  escolaId  String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  escola    Escola  @relation(fields: [escolaId], references: [id])
+  @@unique([usuarioId, escolaId])
+  @@map("usuario_escolas")
+}
+
+model Convite {
+  id             String   @id @default(uuid())
+  tenantId       String
+  email          String
+  papel          Papel
+  token          String   @unique @default(uuid())
+  expiresAt      DateTime
+  aceito         Boolean  @default(false)
+  escolasIds     String[] @default([])
+  mensagem       String?
+  convidadoPorId String?
+  convidadoPor   Usuario? @relation(fields: [convidadoPorId], references: [id])
+  createdAt      DateTime @default(now())
+  @@map("convites")
+}
+
+model Notificacao {
+  id        String   @id @default(uuid())
+  tenantId  String
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  tipo      String   // nc_critica | nc_resolvida | inspecao_reprovada | agendamento_lembrete | nc_vencida
+  titulo    String
+  texto     String
+  url       String?
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId, lida])
+  @@index([tenantId, createdAt])
+  @@map("notificacoes")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("push_subscriptions")
+}
+
+model PreferenciaNotificacao {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  // Email
+  emailNcCritica       Boolean @default(true)
+  emailNcResolvida     Boolean @default(true)
+  emailNcVencida       Boolean @default(true)
+  emailAgendamento     Boolean @default(true)
+  emailInspecaoReprovada Boolean @default(true)
+
+  // Push
+  pushNcCritica        Boolean @default(true)
+  pushNcResolvida      Boolean @default(true)
+  pushNcVencida        Boolean @default(true)
+  pushAgendamento      Boolean @default(true)
+  pushInspecaoReprovada Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("preferencias_notificacao")
+}
+
+model ChecklistModelo {
+  id         String             @id @default(uuid())
+  tenantId   String
+  tenant     Tenant             @relation(fields: [tenantId], references: [id])
+  nome       String
+  descricao  String?
+  categoria  CategoriaChecklist
+  frequencia Frequencia         @default(SEMANAL)
+  ativo      Boolean            @default(true)
+  isTemplate Boolean            @default(false)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  itens        ChecklistItem[]
+  inspecoes    Inspecao[]
+  agendamentos Agendamento[]
+  @@map("checklist_modelos")
+}
+
+model ChecklistItem {
+  id              String          @id @default(uuid())
+  checklistId     String
+  checklist       ChecklistModelo @relation(fields: [checklistId], references: [id])
+  ordem           Int
+  pergunta        String
+  descricao       String?
+  tipoResposta    TipoResposta
+  obrigatorio     Boolean         @default(true)
+  isCritico       Boolean         @default(false)
+  fotoObrigatoria Boolean         @default(false)
+  valorMinimo     Float?
+  valorMaximo     Float?
+  unidade         String?
+  opcoes          String[]
+  peso            Float           @default(1.0)
+  secao           String?
+  respostas       RespostaItem[]
+  @@map("checklist_itens")
+}
+
+model Inspecao {
+  id            String          @id @default(uuid())
+  tenantId      String
+  escolaId      String
+  escola        Escola          @relation(fields: [escolaId], references: [id])
+  checklistId   String
+  checklist     ChecklistModelo @relation(fields: [checklistId], references: [id])
+  inspetorId    String
+  inspetor      Usuario         @relation("InspetorRelation", fields: [inspetorId], references: [id])
+  status        StatusInspecao  @default(EM_ANDAMENTO)
+  score         Float?
+  scoreStatus   ScoreStatus?
+  iniciadaEm    DateTime        @default(now())
+  finalizadaEm  DateTime?
+  latLng        String?
+  assinaturaUrl String?
+  clienteId     String?         @unique
+  sincronizadaEm DateTime?
+  respostas        RespostaItem[]
+  naoConformidades NaoConformidade[]
+  @@map("inspecoes")
+}
+
+model RespostaItem {
+  id               String        @id @default(uuid())
+  inspecaoId       String
+  inspecao         Inspecao      @relation(fields: [inspecaoId], references: [id])
+  itemId           String
+  item             ChecklistItem @relation(fields: [itemId], references: [id])
+  respostaSimNao   Boolean?
+  respostaNumerica Float?
+  respostaTexto    String?
+  conforme         Boolean?
+  fotoUrl          String?
+  observacao       String?
+  createdAt        DateTime      @default(now())
+  @@unique([inspecaoId, itemId])
+  @@map("respostas_itens")
+}
+
+model NaoConformidade {
+  id             String          @id @default(uuid())
+  tenantId       String
+  inspecaoId     String
+  inspecao       Inspecao        @relation(fields: [inspecaoId], references: [id])
+  itemId         String
+  titulo         String
+  descricao      String?
+  severidade     Severidade      @default(MEDIA)
+  status         StatusNC        @default(ABERTA)
+  prazoResolucao DateTime?
+  resolvidaEm    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  acoes          AcaoCorretiva[]
+  @@map("nao_conformidades")
+}
+
+model AcaoCorretiva {
+  id                  String          @id @default(uuid())
+  naoConformidadeId   String
+  naoConformidade     NaoConformidade @relation(fields: [naoConformidadeId], references: [id])
+  responsavelId       String?
+  responsavel         Usuario?        @relation("ResponsavelRelation", fields: [responsavelId], references: [id])
+  descricao           String
+  prazo               DateTime?
+  prioridade          Prioridade      @default(MEDIA)
+  status              StatusAcao      @default(ABERTA)
+  evidenciaUrl        String?
+  observacaoConclusao String?
+  concluidaEm         DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  @@map("acoes_corretivas")
+}
+
+model Agendamento {
+  id              String          @id @default(uuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  escolaId        String
+  escola          Escola          @relation(fields: [escolaId], references: [id])
+  checklistId     String
+  checklist       ChecklistModelo @relation(fields: [checklistId], references: [id])
+  frequencia      Frequencia
+  diaSemana       Int?
+  diaMes          Int?
+  horario         String?
+  ativo           Boolean         @default(true)
+  proximaExecucao DateTime?
+  createdAt       DateTime        @default(now())
+  @@map("agendamentos")
+}
+
+enum Papel {
+  SUPER_ADMIN
+  ADMIN_MUNICIPAL
+  NUTRICIONISTA
+  DIRETOR_ESCOLA
+  MERENDEIRA
+}
+
+enum Plano {
+  STARTER
+  CRESCIMENTO
+  MUNICIPAL
+  ENTERPRISE
+}
+
+enum PlanoStatus {
+  TRIAL
+  ATIVO
+  CANCELADO
+  INADIMPLENTE
+}
+
+enum Turno {
+  MATUTINO
+  VESPERTINO
+  NOTURNO
+  INTEGRAL
+}
+
+enum Frequencia {
+  DIARIO
+  SEMANAL
+  QUINZENAL
+  MENSAL
+  SOB_DEMANDA
+}
+
+enum TipoResposta {
+  SIM_NAO
+  NUMERICO
+  TEXTO_LIVRE
+  MULTIPLA_ESCOLHA
+  FOTO
+  ESCALA
+}
+
+enum StatusInspecao {
+  EM_ANDAMENTO
+  FINALIZADA
+  CANCELADA
+}
+
+enum ScoreStatus {
+  CONFORME
+  ATENCAO
+  NAO_CONFORME
+  REPROVADO
+}
+
+enum Severidade {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum StatusNC {
+  ABERTA
+  EM_ANDAMENTO
+  RESOLVIDA
+  VENCIDA
+}
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum StatusAcao {
+  ABERTA
+  EM_ANDAMENTO
+  CONCLUIDA
+  VENCIDA
+}
+
+enum CategoriaChecklist {
+  TEMPERATURA
+  RECEBIMENTO_GENEROS
+  HIGIENE_PESSOAL
+  INSTALACOES
+  PREPARACAO_DISTRIBUICAO
+  CONTROLE_PRAGAS
+  HIGIENIZACAO_UTENSILIOS
+  OUTRO
+}
+
+model LogAuditoria {
+  id         String   @id @default(uuid())
+  tenantId   String
+  usuarioId  String
+  acao       String
+  alvoId     String?
+  alvoTipo   String?
+  alvoNome   String?
+  detalhes   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, acao])
+  @@index([usuarioId])
+  @@map("logs_auditoria")
+}

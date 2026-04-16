@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-blue-50: #EEF4FD;
+  --color-blue-100: #D9E8FA;
+  --color-blue-600: #1A4A9E;
+  --color-blue-700: #133878;
+  --color-blue-800: #0E2E60;
+
+  --color-green-50: #E8FBF0;
+  --color-green-100: #D1F7E2;
+  --color-green-600: #00963A;
+  --color-green-700: #007A30;
+
+  --color-amber-100: #FEF3C7;
+  --color-amber-500: #F59E0B;
+
+  --color-red-100: #FEE2E2;
+  --color-red-600: #DC2626;
+
+  --color-neutral-50: #F5F9FD;
+  --color-neutral-200: #D5E3F0;
+  --color-neutral-500: #5A7089;
+  --color-neutral-900: #0F1B2D;
+
+  /* shadcn/ui tokens — mapeados a partir das CSS vars do :root */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius: 0.5rem;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 21.8%; /* #0E2E60 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 143 100% 29.4%; /* #00963A */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 21.8%;
+  }
+
+  .dark {
+    --background: 10 31% 8%;          /* #0A1420 */
+    --foreground: 213 62% 88%;        /* azul claro */
+
+    --card: 214 68% 16%;              /* #0E2E60 */
+    --card-foreground: 213 62% 88%;
+
+    --popover: 214 68% 13%;
+    --popover-foreground: 213 62% 88%;
+
+    --primary: 213 62% 88%;
+    --primary-foreground: 214 68% 16%;
+
+    --secondary: 214 68% 18%;
+    --secondary-foreground: 213 62% 88%;
+
+    --muted: 214 50% 22%;
+    --muted-foreground: 213 40% 65%;
+
+    --accent: 214 50% 22%;
+    --accent-foreground: 213 62% 88%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 50% 28%;
+    --input: 214 50% 22%;
+    --ring: 213 62% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  :root {
+    color-scheme: light dark;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    /* Previne pull-to-refresh acidental no iOS/Android */
+    overscroll-behavior-y: none;
+  }
+  body {
+    @apply bg-blue-50 text-neutral-900 font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: none;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+
+  /* ── Mobile: previne zoom automático do iOS ao focar inputs ── */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: max(16px, 1em);
+    }
+  }
+
+  /* ── Touch: resposta imediata em todos os elementos interativos ── */
+  button, a, [role="button"], label[for] {
+    touch-action: manipulation;
+  }
+
+  /* ── Seleção de texto ── */
+  ::selection {
+    background-color: rgba(14, 46, 96, 0.14);
+    color: #0F1B2D;
+  }
+
+  /* ── Autofill — força fundo branco para evitar fundo cinza/amarelo do browser ── */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 40px white inset !important;
+    -webkit-text-fill-color: #0F1B2D !important;
+    caret-color: #0F1B2D;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* ── Select nativo premium ── */
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235A7089' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px !important;
+  }
+}
+
+@layer utilities {
+  /* Padding inferior do conteúdo principal no mobile — acomoda a tab bar (56px) + safe-area do notch */
+  .dashboard-main {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .dashboard-main {
+      padding-bottom: 1.5rem;
+    }
+  }
+
+  .bg-sidebar {
+    @apply bg-blue-800;
+  }
+  .text-brand {
+    @apply text-blue-800;
+  }
+  .text-success {
+    @apply text-green-600;
+  }
+
+  /* ── Scrollbar premium (thin, brand-colored) ── */
+  .scrollbar-thin::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #B3CFF2;
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7AAAE3;
+  }
+}
