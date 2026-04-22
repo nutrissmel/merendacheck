@@ -45,9 +45,16 @@ export async function getServerUserOrNull(): Promise<AuthUser | null> {
 
   if (!user) return null
 
-  const usuario = await prisma.usuario.findUnique({
-    where: { supabaseUserId: user.id },
-  })
+  let usuario: Awaited<ReturnType<typeof prisma.usuario.findUnique>>
+  try {
+    usuario = await prisma.usuario.findUnique({
+      where: { supabaseUserId: user.id },
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[getServerUserOrNull] Prisma error:', msg)
+    return null
+  }
 
   if (!usuario) return null
 
