@@ -9,7 +9,7 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   fallbacks: {
     document: "/offline",
-  },
+  } as any,
   runtimeCaching: [
     // API routes — network first with 5s timeout, fallback to cache
     {
