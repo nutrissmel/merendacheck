@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getRedirectPorPapel } from "@/lib/auth";
 
 export async function loginAction(data: { email: string; senha: string }) {
+  try {
   const supabase = await createClient();
 
   const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -14,12 +15,19 @@ export async function loginAction(data: { email: string; senha: string }) {
   });
 
   if (error) {
+    console.error('[loginAction] Supabase auth error:', error.message)
     return { sucesso: false, erro: error.message };
   }
 
-  const usuario = await prisma.usuario.findUnique({
-    where: { supabaseUserId: authData.user.id },
-  });
+  let usuario
+  try {
+    usuario = await prisma.usuario.findUnique({
+      where: { supabaseUserId: authData.user.id },
+    });
+  } catch (dbErr) {
+    console.error('[loginAction] Prisma error:', dbErr)
+    return { sucesso: false, erro: 'Erro ao acessar banco de dados.' }
+  }
 
   if (!usuario) {
     return { sucesso: false, erro: "Usuário não encontrado no sistema." };
@@ -44,6 +52,10 @@ export async function loginAction(data: { email: string; senha: string }) {
       : getRedirectPorPapel(usuario.papel)
 
   return { sucesso: true, redirectUrl };
+  } catch (e) {
+    console.error('[loginAction] Unexpected error:', e)
+    return { sucesso: false, erro: `Erro inesperado: ${e instanceof Error ? e.message : String(e)}` }
+  }
 }
 
 export async function logoutAction() {
