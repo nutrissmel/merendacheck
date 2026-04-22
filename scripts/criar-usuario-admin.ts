@@ -41,7 +41,7 @@ async function main() {
     if (!supabaseUserId) {
       // Usuário já existe — buscar o ID
       const { data: listData } = await supabase.auth.admin.listUsers()
-      const existing = listData?.users?.find((usr) => usr.email === u.email)
+      const existing = (listData?.users as { id: string; email?: string }[] | undefined)?.find((usr) => usr.email === u.email)
       if (!existing) {
         console.error(`  ❌ Não encontrado no Supabase`)
         continue
