@@ -25,8 +25,9 @@ export async function loginAction(data: { email: string; senha: string }) {
       where: { supabaseUserId: authData.user.id },
     });
   } catch (dbErr) {
-    console.error('[loginAction] Prisma error:', dbErr)
-    return { sucesso: false, erro: 'Erro ao acessar banco de dados.' }
+    const msg = dbErr instanceof Error ? dbErr.message.slice(0, 300) : String(dbErr).slice(0, 300)
+    console.error('[loginAction] Prisma error:', msg)
+    return { sucesso: false, erro: `DB: ${msg}` }
   }
 
   if (!usuario) {
