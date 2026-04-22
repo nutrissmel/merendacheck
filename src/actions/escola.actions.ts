@@ -199,7 +199,7 @@ export async function criarEscolaAction(data: CriarEscolaInput) {
 
   const validado = escolaSchema.safeParse(data)
   if (!validado.success) {
-    const primeiro = validado.error.errors[0]
+    const primeiro = validado.error.issues[0]
     return { sucesso: false as const, erro: primeiro.message, campo: String(primeiro.path[0] ?? '') }
   }
 
@@ -243,7 +243,7 @@ export async function atualizarEscolaAction(escolaId: string, data: AtualizarEsc
 
   const validado = escolaUpdateSchema.safeParse(data)
   if (!validado.success) {
-    const primeiro = validado.error.errors[0]
+    const primeiro = validado.error.issues[0]
     return { sucesso: false as const, erro: primeiro.message, campo: String(primeiro.path[0] ?? '') }
   }
 
