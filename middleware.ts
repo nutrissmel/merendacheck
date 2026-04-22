@@ -30,14 +30,12 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 function papelPermitido(pathname: string, papel: string | undefined): boolean {
-  if (!papel) return false;
-
-  // Ordena por comprimento decrescente para matcher o prefixo mais específico
   const rota = Object.keys(ROTAS_POR_PAPEL)
     .sort((a, b) => b.length - a.length)
     .find((prefixo) => pathname.startsWith(prefixo));
 
-  if (!rota) return true; // Rota sem restrição de papel
+  if (!rota) return true; // Rota sem restrição de papel — qualquer usuário pode acessar
+  if (!papel) return false; // Rota restrita e papel não definido
   return ROTAS_POR_PAPEL[rota].includes(papel);
 }
 
