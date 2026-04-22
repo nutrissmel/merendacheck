@@ -6,6 +6,7 @@ import { AlertTriangle, Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export async function TrialBanner() {
+  try {
   const tenantId = await getTenantId();
   if (!tenantId) return null;
 
@@ -41,8 +42,8 @@ export async function TrialBanner() {
         </p>
       </div>
 
-      <Link 
-        href="/planos" 
+      <Link
+        href="/planos"
         className={cn(
           "text-xs font-bold uppercase tracking-wider flex items-center gap-2 py-1.5 px-4 rounded-full transition-all",
           isExpired ? "bg-white text-red-600 hover:bg-neutral-100" :
@@ -55,4 +56,7 @@ export async function TrialBanner() {
       </Link>
     </div>
   );
+  } catch {
+    return null;
+  }
 }

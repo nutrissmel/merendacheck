@@ -15,18 +15,26 @@ export default async function DashboardLayout({
 }) {
   const user = await getServerUser()
 
-  const [ncCount, ncVencidas] = await Promise.all([
-    prisma.naoConformidade.count({
-      where: { tenantId: user.tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
-    }),
-    prisma.naoConformidade.count({
-      where: {
-        tenantId: user.tenantId,
-        prazoResolucao: { lt: new Date() },
-        status: { notIn: ['RESOLVIDA'] },
-      },
-    }),
-  ])
+  let ncCount = 0
+  let ncVencidas = 0
+  try {
+    const [ncCountData, ncVencidasData] = await Promise.all([
+      prisma.naoConformidade.count({
+        where: { tenantId: user.tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
+      }),
+      prisma.naoConformidade.count({
+        where: {
+          tenantId: user.tenantId,
+          prazoResolucao: { lt: new Date() },
+          status: { notIn: ['RESOLVIDA'] },
+        },
+      }),
+    ])
+    ncCount = ncCountData
+    ncVencidas = ncVencidasData
+  } catch {
+    // NC counts are non-critical; fail gracefully
+  }
 
   const userProps = {
     nome: user.nome,
@@ -43,7 +51,7 @@ export default async function DashboardLayout({
         {/* Header — hidden on mobile when showing full-screen inspection */}
         <Header user={userProps} ncCount={ncCount} />
 
-        <Suspense fallback={<div className="h-10 bg-amber-50 animate-pulse shrink-0" />}>
+        <Suspense fallback={null}>
           <TrialBanner />
         </Suspense>
 
