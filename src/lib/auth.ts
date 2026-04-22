@@ -53,6 +53,8 @@ export async function getServerUserOrNull(): Promise<AuthUser | null> {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.error('[getServerUserOrNull] Prisma error:', msg)
+    // Sign out so the middleware doesn't redirect back to /dashboard (which would loop)
+    try { await supabase.auth.signOut() } catch { /* ignore */ }
     return null
   }
 
