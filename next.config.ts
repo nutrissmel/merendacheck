@@ -155,7 +155,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-const configWithPWA = withPWA(nextConfig);
+const configWithPWA = withPWA(nextConfig as any);
 
 export default withSentryConfig(configWithPWA as any, {
   // Sentry project settings — set SENTRY_ORG and SENTRY_PROJECT in env
