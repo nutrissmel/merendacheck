@@ -11,7 +11,9 @@ import { ptBR } from 'date-fns/locale'
 import type { Papel } from '@prisma/client'
 import type React from 'react'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY ?? 're_placeholder')
+}
 
 const FROM_ADDRESS = 'MerendaCheck <noreply@merendacheck.com.br>'
 
@@ -24,7 +26,7 @@ async function enviarEmail(params: {
   corpo: React.ReactElement
 }): Promise<void> {
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM_ADDRESS,
       to: [params.para],
       subject: params.assunto,
