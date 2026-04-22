@@ -83,7 +83,7 @@ export function ModalEditarUsuario({
       if (papel !== usuario.papel) {
         const res = await alterarPapelAction(usuario.id, papel)
         if (!res.sucesso) {
-          setErroInline(res.erro)
+          setErroInline((res as any).erro)
           setSalvando(false)
           return
         }
@@ -95,7 +95,7 @@ export function ModalEditarUsuario({
           ? await reativarUsuarioAction(usuario.id)
           : await desativarUsuarioAction(usuario.id)
         if (!res.sucesso) {
-          setErroInline(res.erro)
+          setErroInline((res as any).erro)
           setSalvando(false)
           return
         }
@@ -117,7 +117,7 @@ export function ModalEditarUsuario({
     setSalvando(false)
 
     if (!res.sucesso) {
-      setErroInline(res.erro)
+      setErroInline((res as any).erro)
       return
     }
 

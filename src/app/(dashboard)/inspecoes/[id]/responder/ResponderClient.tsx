@@ -61,7 +61,7 @@ export function ResponderClient({ inspecao, usuarioId }: Props) {
   } = useInspecao({
     inspecaoId: inspecao.id,
     itens: inspecao.checklist.itens,
-    respostasIniciais: inspecao.respostas,
+    respostasIniciais: inspecao.respostas as any,
   })
 
   const progressoPct = totalItens > 0 ? Math.round((totalRespondidos / totalItens) * 100) : 0

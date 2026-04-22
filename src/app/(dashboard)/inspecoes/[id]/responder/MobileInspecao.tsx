@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ThumbsUp, ThumbsDown, Minus, Camera, MessageSquare,
@@ -19,7 +19,6 @@ import { RespostaEscala } from '@/components/inspecao/RespostaEscala'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { ChecklistItem, RespostaItem } from '@prisma/client'
-import type { RespostaLocal } from '@/hooks/useInspecao'
 
 type InspecaoData = {
   id: string
@@ -55,19 +54,16 @@ export function MobileInspecao({ inspecao }: Props) {
     itemAtual,
     totalItens,
     totalRespondidos,
-    itensPendentes,
-    salvando,
     responderItem,
     atualizarFoto,
     atualizarObservacao,
     irParaProximo,
     irParaAnterior,
-    irParaItem,
     podeFinalizarInspecao,
   } = useInspecao({
     inspecaoId: inspecao.id,
     itens: inspecao.checklist.itens,
-    respostasIniciais: inspecao.respostas,
+    respostasIniciais: inspecao.respostas as any,
   })
 
   const percentual = totalItens > 0 ? Math.round((totalRespondidos / totalItens) * 100) : 0

@@ -114,7 +114,7 @@ export default function UsuariosPage() {
     startTransition(async () => {
       const res = await desativarUsuarioAction(u.id)
       if (res.sucesso) { toast.success(`${u.nome} desativado.`); loadData() }
-      else toast.error(res.erro)
+      else toast.error((res as any).erro)
     })
   }
 
@@ -122,7 +122,7 @@ export default function UsuariosPage() {
     startTransition(async () => {
       const res = await reativarUsuarioAction(u.id)
       if (res.sucesso) { toast.success(`${u.nome} reativado.`); loadData() }
-      else toast.error(res.erro)
+      else toast.error((res as any).erro)
     })
   }
 
@@ -130,7 +130,7 @@ export default function UsuariosPage() {
     startTransition(async () => {
       const res = await enviarResetSenhaAdminAction(u.id)
       if (res.sucesso) toast.success(`E-mail de reset enviado para ${u.email}.`)
-      else toast.error(res.erro)
+      else toast.error((res as any).erro)
     })
   }
 
@@ -138,7 +138,7 @@ export default function UsuariosPage() {
     startTransition(async () => {
       const res = await reenviarConviteAction(id)
       if (res.sucesso) { toast.success('Convite reenviado.'); loadData() }
-      else toast.error(res.erro)
+      else toast.error((res as any).erro)
     })
   }
 
@@ -146,7 +146,7 @@ export default function UsuariosPage() {
     startTransition(async () => {
       const res = await revogarConviteAction(id)
       if (res.sucesso) { toast.success('Convite revogado.'); loadData() }
-      else toast.error(res.erro)
+      else toast.error((res as any).erro)
     })
   }
 
@@ -175,13 +175,13 @@ export default function UsuariosPage() {
         {/* Tabs */}
         <div className="flex border-b border-[#D5E3F0] px-1 overflow-x-auto">
           {([
-            { key: 'ativos',   label: 'Usuários ativos', count: ativos.length },
-            { key: 'convites', label: 'Convites', count: pendentes.length, badge: 'amber' },
-            { key: 'inativos', label: 'Inativos', count: inativos.length },
-          ] as const).map(({ key, label, count, badge }) => (
+            { key: 'ativos',   label: 'Usuários ativos', count: ativos.length, badge: undefined },
+            { key: 'convites', label: 'Convites', count: pendentes.length, badge: 'amber' as const },
+            { key: 'inativos', label: 'Inativos', count: inativos.length, badge: undefined },
+          ]).map(({ key, label, count, badge }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => setTab(key as Tab)}
               className={cn(
                 'flex items-center gap-2 px-5 py-4 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors shrink-0',
                 tab === key

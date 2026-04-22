@@ -186,7 +186,7 @@ function FormularioAceiteConvite({
       if (result.sucesso) {
         router.push(result.redirectUrl)
       } else {
-        setErro(result.erro)
+        setErro((result as any).erro)
       }
     })
   }

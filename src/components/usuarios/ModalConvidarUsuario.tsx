@@ -28,9 +28,7 @@ const PAPEIS_CONVIDAVEIS: { value: Papel; label: string }[] = [
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
-  papel: z.enum(['NUTRICIONISTA', 'DIRETOR_ESCOLA', 'MERENDEIRA'] as const, {
-    required_error: 'Selecione um papel',
-  }),
+  papel: z.enum(['NUTRICIONISTA', 'DIRETOR_ESCOLA', 'MERENDEIRA'] as const).refine(Boolean, { message: 'Selecione um papel' }),
   escolasIds: z.array(z.string()).optional(),
   mensagemPersonalizada: z.string().max(200, 'Máximo 200 caracteres').optional(),
 })
@@ -62,7 +60,6 @@ export function ModalConvidarUsuario({
     register,
     handleSubmit,
     watch,
-    setValue,
     reset,
     formState: { errors },
   } = useForm<FormValues>({
@@ -100,7 +97,7 @@ export function ModalConvidarUsuario({
         handleClose()
         onSuccess?.()
       } else {
-        toast.error(result.erro)
+        toast.error((result as any).erro)
       }
     })
   }

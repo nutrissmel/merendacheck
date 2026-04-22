@@ -2,8 +2,6 @@
 
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   Tooltip,
   Area,
   AreaChart,
@@ -44,8 +42,6 @@ export function Sparkline({
   cor,
   altura = 60,
   mostrarTooltip = true,
-  valorMin = 0,
-  valorMax = 100,
 }: SparklineProps) {
   if (dados.length === 0) {
     return (
@@ -83,7 +79,6 @@ export function Sparkline({
           fill={`url(#grad-${corFinal.replace('#', '')})`}
           dot={false}
           activeDot={{ r: 3, fill: corFinal }}
-          domain={[valorMin, valorMax]}
         />
       </AreaChart>
     </ResponsiveContainer>

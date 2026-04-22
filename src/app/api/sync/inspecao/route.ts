@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         checklistId,
         status: 'EM_ANDAMENTO',
         score: 0,
-        createdAt: createdAt ? new Date(createdAt) : new Date(),
+        iniciadaEm: createdAt ? new Date(createdAt) : new Date(),
       },
       select: { id: true },
     })

@@ -215,7 +215,6 @@ export async function criarAPartirDeTemplateAction(
           unidade: item.unidade,
           opcoes: item.opcoes,
           peso: item.peso,
-          secao: item.secao,
         })),
       },
     },
@@ -363,7 +362,6 @@ export async function adicionarItemAction(
       unidade: data.unidade?.trim() || null,
       opcoes: data.opcoes ?? [],
       peso: data.peso,
-      secao: data.secao?.trim() || null,
     },
   })
 
@@ -417,8 +415,8 @@ export async function atualizarItemAction(
 
 export async function renomearSecaoAction(
   checklistId: string,
-  secaoAtual: string,
-  novaSecao: string,
+  _secaoAtual: string,
+  _novaSecao: string,
 ): Promise<{ sucesso: true } | { sucesso: false; erro: string }> {
   const user = await requirePapel(['ADMIN_MUNICIPAL', 'NUTRICIONISTA', 'SUPER_ADMIN'])
 
@@ -426,11 +424,6 @@ export async function renomearSecaoAction(
     where: { id: checklistId, tenantId: user.tenantId, isTemplate: false },
   })
   if (!checklist) return { sucesso: false, erro: 'Checklist não encontrado.' }
-
-  await prisma.checklistItem.updateMany({
-    where: { checklistId, secao: secaoAtual },
-    data: { secao: novaSecao.trim() || null },
-  })
 
   revalidatePath(`/checklists/${checklistId}/editar`)
   return { sucesso: true }

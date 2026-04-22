@@ -593,6 +593,7 @@ export async function buscarInspecaoParaResponder(inspecaoId: string) {
         respostas: {
           select: {
             id: true,
+            inspecaoId: true,
             itemId: true,
             respostaSimNao: true,
             respostaNumerica: true,
@@ -600,6 +601,7 @@ export async function buscarInspecaoParaResponder(inspecaoId: string) {
             conforme: true,
             fotoUrl: true,
             observacao: true,
+            createdAt: true,
           },
         },
       },

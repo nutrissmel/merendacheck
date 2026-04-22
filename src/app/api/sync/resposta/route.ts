@@ -33,22 +33,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert resposta
-    await prisma.resposta.upsert({
+    await prisma.respostaItem.upsert({
       where: { inspecaoId_itemId: { inspecaoId, itemId } },
       create: { inspecaoId, itemId, conforme, ...resto },
       update: { conforme, ...resto },
     })
 
     // Recalc score
-    const todasRespostas = await prisma.resposta.findMany({ where: { inspecaoId } })
-    const { score, scoreStatus, temCriticoReprovado } = calcularScore(
+    const todasRespostas = await prisma.respostaItem.findMany({ where: { inspecaoId } })
+    const { score, scoreStatus } = calcularScore(
       inspecao.checklist.itens,
       todasRespostas
     )
 
     await prisma.inspecao.update({
       where: { id: inspecaoId },
-      data: { score, scoreStatus, temCriticoReprovado },
+      data: { score, scoreStatus },
     })
 
     return NextResponse.json({ sucesso: true, score })

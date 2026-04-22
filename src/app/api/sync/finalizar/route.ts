@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         where: { id: inspecaoId },
         data: {
           status: 'FINALIZADA',
-          finalizadaAt: new Date(),
+          finalizadaEm: new Date(),
           assinaturaUrl,
         },
       }),
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
             tenantId: user.tenantId,
             inspecaoId,
             itemId: r.itemId,
-            descricao: item?.pergunta ?? 'Item não conforme',
-            gravidade: item?.isCritico ? 'CRITICA' : 'MODERADA',
+            titulo: item?.pergunta ?? 'Item não conforme',
+            severidade: item?.isCritico ? 'CRITICA' : 'MEDIA',
             status: 'ABERTA',
           },
         })

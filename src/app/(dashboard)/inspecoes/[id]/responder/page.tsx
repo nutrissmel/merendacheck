@@ -23,7 +23,7 @@ export default async function ResponderPage({
 
   return (
     <ResponderClient
-      inspecao={inspecao}
+      inspecao={inspecao as any}
       usuarioId={user.id}
     />
   )
