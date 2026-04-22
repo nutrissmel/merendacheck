@@ -8,10 +8,12 @@ import { createClient } from '@supabase/supabase-js'
 import { differenceInDays, subDays } from 'date-fns'
 import type { Severidade, StatusNC, Prioridade, StatusAcao } from '@prisma/client'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // ─── Tipos exportados ─────────────────────────────────────────────────────────
 
@@ -718,13 +720,13 @@ export async function uploadEvidenciaAcaoAction(
     const path = `${user.tenantId}/evidencias/${acaoId}/${Date.now()}.${ext}`
 
     const arrayBuffer = await file.arrayBuffer()
-    const { error } = await supabase.storage
+    const { error } = await getSupabase().storage
       .from('inspecao-fotos')
       .upload(path, arrayBuffer, { contentType: file.type, upsert: true })
 
     if (error) return { sucesso: false, erro: error.message }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = getSupabase().storage
       .from('inspecao-fotos')
       .getPublicUrl(path)
 
