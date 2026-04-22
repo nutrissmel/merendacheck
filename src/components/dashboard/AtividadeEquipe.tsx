@@ -28,7 +28,12 @@ interface AtividadeEquipeProps {
 }
 
 export async function AtividadeEquipe({ periodo, escolaId }: AtividadeEquipeProps) {
-  const membros = await buscarAtividadeEquipe({ periodo, escolaId })
+  let membros: Awaited<ReturnType<typeof buscarAtividadeEquipe>>
+  try {
+    membros = await buscarAtividadeEquipe({ periodo, escolaId })
+  } catch (e) {
+    return <div className="p-4 text-xs text-red-500 font-mono">AtividadeEquipe erro: {String(e)}</div>
+  }
 
   if (membros.length === 0) return null
 
