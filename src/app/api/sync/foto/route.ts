@@ -4,25 +4,23 @@ import { createClient } from '@supabase/supabase-js'
 
 const BUCKET = 'inspections'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-async function garantirBucket() {
-  const { data: buckets } = await supabase.storage.listBuckets()
-  if (!buckets?.some((b) => b.name === BUCKET)) {
-    await supabase.storage.createBucket(BUCKET, {
-      public: true,
-      fileSizeLimit: 20 * 1024 * 1024,
-      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-    })
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const user = await getServerUser()
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: buckets } = await supabase.storage.listBuckets()
+    if (!buckets?.some((b) => b.name === BUCKET)) {
+      await supabase.storage.createBucket(BUCKET, {
+        public: true,
+        fileSizeLimit: 20 * 1024 * 1024,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+      })
+    }
     const formData = await request.formData()
 
     const file = formData.get('file') as File | null
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ erro: 'Dados obrigatórios ausentes' }, { status: 400 })
     }
 
-    await garantirBucket()
+    // bucket already ensured above
 
     const ext = file.type.split('/')[1] ?? 'jpg'
     const path = `${user.tenantId}/${inspecaoId}/${itemId}/${Date.now()}.${ext}`
