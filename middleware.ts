@@ -18,7 +18,7 @@ const ROTAS_POR_PAPEL: Record<string, string[]> = {
   "/planos":                 ["ADMIN_MUNICIPAL", "SUPER_ADMIN"],
   "/relatorios":             ["ADMIN_MUNICIPAL", "NUTRICIONISTA", "SUPER_ADMIN"],
   "/checklists":             ["ADMIN_MUNICIPAL", "NUTRICIONISTA", "DIRETOR_ESCOLA", "SUPER_ADMIN"],
-  "/nao-conformidades":      ["ADMIN_MUNICIPAL", "NUTRICIONISTA", "SUPER_ADMIN"],
+  "/nao-conformidades":      ["ADMIN_MUNICIPAL", "NUTRICIONISTA", "DIRETOR_ESCOLA", "SUPER_ADMIN"],
 };
 
 function isPublicRoute(pathname: string): boolean {

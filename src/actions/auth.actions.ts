@@ -38,12 +38,14 @@ export async function loginAction(data: { email: string; senha: string }) {
     return { sucesso: false, erro: "Sua conta foi desativada. Contate o administrador." };
   }
 
-  // SUPER_ADMIN: sessão sem expiração (renovar automaticamente)
-  if (usuario.papel === 'SUPER_ADMIN') {
-    await supabase.auth.updateUser({
-      data: { super_admin: true },
-    })
-  }
+  // Sincroniza papel e primeiro_acesso no Supabase Auth para o middleware poder ler
+  await supabase.auth.updateUser({
+    data: {
+      papel: usuario.papel,
+      ativo: usuario.ativo,
+      primeiro_acesso: usuario.primeiroAcesso,
+    },
+  })
 
   const redirectUrl = usuario.papel === 'SUPER_ADMIN'
     ? '/super-admin'
@@ -106,11 +108,14 @@ export async function concluirPrimeiroAcessoAction(data: { senha: string }) {
     return { sucesso: false, erro: authError?.message || "Erro ao atualizar senha." };
   }
 
-  // Atualizar flag no banco
-  await prisma.usuario.update({
-    where: { supabaseUserId: user.id },
-    data: { primeiroAcesso: false },
-  });
+  // Atualizar flag no banco e no metadata do Supabase Auth
+  await Promise.all([
+    prisma.usuario.update({
+      where: { supabaseUserId: user.id },
+      data: { primeiroAcesso: false },
+    }),
+    supabase.auth.updateUser({ data: { primeiro_acesso: false } }),
+  ])
 
   return { sucesso: true };
 }
