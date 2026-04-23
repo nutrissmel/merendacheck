@@ -102,8 +102,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/primeiro-acesso", request.url));
   }
 
-  // Autenticado tentando acessar rota pública (exceto nova-senha)
-  if (isPublic && pathname !== "/nova-senha" && pathname !== "/") {
+  // Autenticado tentando acessar rota pública (exceto nova-senha e primeiro-acesso)
+  if (isPublic && pathname !== "/nova-senha" && pathname !== "/primeiro-acesso" && pathname !== "/") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
