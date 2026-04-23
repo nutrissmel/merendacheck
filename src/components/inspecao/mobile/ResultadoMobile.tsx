@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle2, XCircle, ClipboardList, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { CheckCircle2, XCircle, ClipboardList, Plus, ArrowRight, Star } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -18,17 +17,49 @@ interface Props {
   finalizadaEm: Date
 }
 
-const scoreStatusConfig: Record<string, { label: string; cor: string; headerBg: string }> = {
-  CONFORME: { label: 'Conforme', cor: 'text-[#00963A]', headerBg: 'bg-[#00963A]' },
-  ATENCAO: { label: 'Atenção', cor: 'text-amber-500', headerBg: 'bg-amber-500' },
-  NAO_CONFORME: { label: 'Não Conforme', cor: 'text-red-600', headerBg: 'bg-red-600' },
-  REPROVADO: { label: 'Reprovado', cor: 'text-red-800', headerBg: 'bg-red-800' },
+const STATUS_CONFIG: Record<string, {
+  label: string
+  gradient: string
+  ring: string
+  scoreColor: string
+  icon: React.ReactNode
+}> = {
+  CONFORME: {
+    label: 'Conforme',
+    gradient: 'linear-gradient(145deg, #064E3B 0%, #065F46 55%, #047857 100%)',
+    ring: '#34D399',
+    scoreColor: '#D1FAE5',
+    icon: <Star size={22} className="text-emerald-300" fill="currentColor" />,
+  },
+  ATENCAO: {
+    label: 'Atenção',
+    gradient: 'linear-gradient(145deg, #78350F 0%, #92400E 55%, #B45309 100%)',
+    ring: '#FCD34D',
+    scoreColor: '#FEF3C7',
+    icon: <CheckCircle2 size={22} className="text-amber-300" />,
+  },
+  NAO_CONFORME: {
+    label: 'Não Conforme',
+    gradient: 'linear-gradient(145deg, #7F1D1D 0%, #991B1B 55%, #B91C1C 100%)',
+    ring: '#FCA5A5',
+    scoreColor: '#FEE2E2',
+    icon: <XCircle size={22} className="text-red-300" />,
+  },
+  REPROVADO: {
+    label: 'Reprovado',
+    gradient: 'linear-gradient(145deg, #450A0A 0%, #7F1D1D 55%, #991B1B 100%)',
+    ring: '#F87171',
+    scoreColor: '#FEE2E2',
+    icon: <XCircle size={22} className="text-red-400" />,
+  },
 }
 
 const TAP: React.CSSProperties = {
   touchAction: 'manipulation',
   WebkitTapHighlightColor: 'transparent',
 }
+
+const CIRCUNF = 2 * Math.PI * 52
 
 export function ResultadoMobile({
   inspecaoId,
@@ -41,82 +72,129 @@ export function ResultadoMobile({
   totalNCs,
   finalizadaEm,
 }: Props) {
-  const config = scoreStatusConfig[scoreStatus] ?? scoreStatusConfig.NAO_CONFORME
+  const cfg = STATUS_CONFIG[scoreStatus] ?? STATUS_CONFIG.NAO_CONFORME
+  const dashOffset = CIRCUNF - (score / 100) * CIRCUNF
 
   return (
-    <div className="min-h-screen bg-[#F5F9FD] flex flex-col">
-      {/* Header */}
-      <div className={cn('px-4 py-5 text-center text-white', config.headerBg)}>
-        <CheckCircle2 size={36} className="mx-auto mb-2 opacity-90" />
-        <h1 className="text-lg font-bold">Inspeção Finalizada!</h1>
+    <div className="min-h-screen bg-[#EEF4FD] pb-8 flex flex-col">
+
+      {/* ── Hero header ────────────────────────────────────────── */}
+      <div
+        className="relative px-4 pt-12 pb-10 overflow-hidden text-center"
+        style={{ background: cfg.gradient }}
+      >
+        {/* Decorative blobs */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10 bg-white -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10 bg-white translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+        {/* Status icon pill */}
+        <div className="relative inline-flex items-center gap-1.5 bg-white/15 border border-white/25 rounded-full px-3 py-1 mb-5">
+          {cfg.icon}
+          <span className="text-white font-bold text-sm">{cfg.label}</span>
+        </div>
+
+        {/* Circular score ring */}
+        <div className="relative flex items-center justify-center mx-auto mb-4" style={{ width: 124, height: 124 }}>
+          <svg width="124" height="124" viewBox="0 0 124 124" className="absolute inset-0 -rotate-90">
+            <circle cx="62" cy="62" r="52" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
+            <circle
+              cx="62" cy="62" r="52"
+              fill="none"
+              stroke={cfg.ring}
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUNF}
+              strokeDashoffset={dashOffset}
+              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+            />
+          </svg>
+          <div className="relative text-center">
+            <p className="text-white font-bold leading-none" style={{ fontSize: 36 }}>{score}%</p>
+            <p className="text-white/60 text-[10px] font-medium mt-0.5 uppercase tracking-wider">score</p>
+          </div>
+        </div>
+
+        {/* Meta */}
+        <p className="text-white font-bold text-base leading-snug">{escolaNome}</p>
+        <p className="text-white/60 text-xs mt-1">{checklistNome}</p>
+        <p className="text-white/45 text-xs mt-0.5">
+          {format(new Date(finalizadaEm), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+        </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {/* Score */}
-        <div className="bg-white border-b border-[#D5E3F0] px-4 py-8 text-center">
-          <div className={cn('text-6xl font-bold mb-1', config.cor)} aria-live="polite">
-            {score}%
-          </div>
-          <div className={cn('text-xl font-bold mb-4', config.cor)}>
-            {config.label}
-          </div>
-
-          <div className="text-sm text-[#5A7089] space-y-1">
-            <p className="font-semibold text-[#0F1B2D]">{escolaNome}</p>
-            <p>{checklistNome}</p>
-            <p>{format(new Date(finalizadaEm), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
-          </div>
+      {/* ── Stats row ──────────────────────────────────────────── */}
+      <div className="px-4 -mt-5 grid grid-cols-3 gap-3">
+        {/* Conformes */}
+        <div
+          className="bg-white rounded-2xl p-3 text-center border border-[#D5E3F0]"
+          style={{ boxShadow: '0 2px 12px rgba(14,46,96,0.08)' }}
+        >
+          <CheckCircle2 size={16} className="text-[#00963A] mx-auto mb-1" />
+          <p className="text-xl font-bold text-[#00963A] leading-none">{totalConformes}</p>
+          <p className="text-[9px] text-[#9DAFC4] font-medium mt-0.5 uppercase tracking-wide">Conforme{totalConformes !== 1 ? 's' : ''}</p>
         </div>
 
-        {/* Summary */}
-        <div className="mx-4 mt-4 bg-white rounded-xl border border-[#D5E3F0] divide-y divide-neutral-100">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <CheckCircle2 size={18} className="text-[#00963A] shrink-0" />
-            <span className="text-sm text-[#0F1B2D]">
-              <span className="font-bold text-[#00963A]">{totalConformes}</span> ite{totalConformes !== 1 ? 'ns conformes' : 'm conforme'}
-            </span>
-          </div>
-
-          {totalNaoConformes > 0 && (
-            <div className="flex items-center gap-3 px-4 py-3">
-              <XCircle size={18} className="text-red-500 shrink-0" />
-              <span className="text-sm text-[#0F1B2D]">
-                <span className="font-bold text-red-600">{totalNaoConformes}</span> não conforme{totalNaoConformes !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
-
-          {totalNCs > 0 && (
-            <div className="flex items-center gap-3 px-4 py-3">
-              <ClipboardList size={18} className="text-amber-500 shrink-0" />
-              <span className="text-sm text-[#0F1B2D]">
-                <span className="font-bold text-amber-600">{totalNCs}</span> NC{totalNCs !== 1 ? 's' : ''} gerada{totalNCs !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
+        {/* Não conformes */}
+        <div
+          className="bg-white rounded-2xl p-3 text-center border border-[#D5E3F0]"
+          style={{ boxShadow: '0 2px 12px rgba(14,46,96,0.08)' }}
+        >
+          <XCircle size={16} className={totalNaoConformes > 0 ? 'text-red-500 mx-auto mb-1' : 'text-[#9DAFC4] mx-auto mb-1'} />
+          <p className={`text-xl font-bold leading-none ${totalNaoConformes > 0 ? 'text-red-600' : 'text-[#9DAFC4]'}`}>{totalNaoConformes}</p>
+          <p className="text-[9px] text-[#9DAFC4] font-medium mt-0.5 uppercase tracking-wide">Não conforme{totalNaoConformes !== 1 ? 's' : ''}</p>
         </div>
 
-        {/* Actions */}
-        <div className="mx-4 mt-4 space-y-3">
-          <Link
-            href="/inspecoes/nova"
-            className="flex items-center justify-center gap-2 w-full bg-[#0E2E60] text-white font-bold rounded-xl"
-            style={{ height: 56, fontSize: 16, ...TAP }}
-          >
-            <Plus size={20} /> Nova inspeção
-          </Link>
-
-          <Link
-            href={`/inspecoes/${inspecaoId}`}
-            className="flex items-center justify-center w-full border-2 border-[#0E2E60] text-[#0E2E60] font-bold rounded-xl"
-            style={{ height: 56, fontSize: 16, ...TAP }}
-          >
-            Ver resultado completo
-          </Link>
+        {/* NCs geradas */}
+        <div
+          className="bg-white rounded-2xl p-3 text-center border border-[#D5E3F0]"
+          style={{ boxShadow: '0 2px 12px rgba(14,46,96,0.08)' }}
+        >
+          <ClipboardList size={16} className={totalNCs > 0 ? 'text-amber-500 mx-auto mb-1' : 'text-[#9DAFC4] mx-auto mb-1'} />
+          <p className={`text-xl font-bold leading-none ${totalNCs > 0 ? 'text-amber-600' : 'text-[#9DAFC4]'}`}>{totalNCs}</p>
+          <p className="text-[9px] text-[#9DAFC4] font-medium mt-0.5 uppercase tracking-wide">NC{totalNCs !== 1 ? 's' : ''} gerada{totalNCs !== 1 ? 's' : ''}</p>
         </div>
-
-        <div className="h-8" />
       </div>
+
+      {/* ── Congratulations message (only for CONFORME) ────────── */}
+      {scoreStatus === 'CONFORME' && (
+        <div className="mx-4 mt-4 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+          <Star size={18} className="text-emerald-500 shrink-0" fill="currentColor" />
+          <p className="text-sm text-emerald-700 font-medium leading-snug">
+            Excelente! Esta escola está em conformidade com os padrões PNAE.
+          </p>
+        </div>
+      )}
+
+      {/* ── Actions ────────────────────────────────────────────── */}
+      <div className="px-4 mt-5 space-y-3">
+        <Link
+          href="/inspecoes/nova"
+          className="flex items-center justify-center gap-2 w-full rounded-2xl text-white font-semibold text-[15px]"
+          style={{
+            height: 52,
+            background: 'linear-gradient(135deg, #0B2550 0%, #0E2E60 50%, #133878 100%)',
+            boxShadow: '0 4px 16px rgba(14,46,96,0.30)',
+            ...TAP,
+          } as React.CSSProperties}
+        >
+          <Plus size={18} />
+          Nova inspeção
+        </Link>
+
+        <Link
+          href={`/inspecoes/${inspecaoId}`}
+          className="flex items-center justify-center gap-2 w-full rounded-2xl font-semibold text-[15px] bg-white border border-[#D5E3F0] text-[#0E2E60]"
+          style={{
+            height: 52,
+            boxShadow: '0 2px 8px rgba(14,46,96,0.08)',
+            ...TAP,
+          } as React.CSSProperties}
+        >
+          Ver resultado completo
+          <ArrowRight size={16} className="text-[#9DAFC4]" />
+        </Link>
+      </div>
+
     </div>
   )
 }
