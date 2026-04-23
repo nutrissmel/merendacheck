@@ -169,7 +169,8 @@ function fmtMes(iso: string) {
 }
 
 export function RelatorioFNDEPDF({ dados }: { dados: DadosFNDE }) {
-  const geradoEm = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+  const nowBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const geradoEm = format(nowBRT, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
   const periodoStr = `${fmtMes(dados.periodo.inicio)}`
   const taxaCertificacao = dados.totalEscolas > 0
     ? Math.round((dados.escolasCertificadas / dados.totalEscolas) * 100)

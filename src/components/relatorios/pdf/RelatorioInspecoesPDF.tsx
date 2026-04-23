@@ -163,7 +163,8 @@ interface Props {
 
 export function RelatorioInspecoesPDF({ dados }: Props) {
   const periodoStr = `${formatarData(dados.periodo.inicio)} a ${formatarData(dados.periodo.fim)}`
-  const geradoEm = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+  const nowBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const geradoEm = format(nowBRT, 'dd/MM/yyyy HH:mm', { locale: ptBR })
 
   return (
     <Document>
