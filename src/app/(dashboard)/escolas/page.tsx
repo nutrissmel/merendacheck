@@ -59,7 +59,7 @@ export default async function EscolasPage({
   const params = await searchParams
 
   return (
-    <div className="space-y-0 max-w-7xl mx-auto">
+    <div className="space-y-0 max-w-7xl mx-auto px-4 md:px-0">
       <PageHeader
         titulo="Escolas"
         subtitulo="Gerencie as escolas do município"

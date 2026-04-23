@@ -34,11 +34,11 @@ export default async function ChecklistsPage({
     todos
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-0">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-[#0F1B2D] font-heading">Checklists</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-[#0F1B2D] font-heading">Checklists</h1>
           <p className="text-sm text-[#5A7089] mt-1">Gerencie os modelos de inspeção do município</p>
         </div>
         {podeEditar && (

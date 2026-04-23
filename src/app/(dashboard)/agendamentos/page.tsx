@@ -25,7 +25,7 @@ export default async function AgendamentosPage() {
   const podeEditar = PODE_EDITAR.includes(usuario.papel)
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4 md:px-0">
       <PageHeader
         titulo="Agendamentos"
         subtitulo="Programe inspeções recorrentes nas escolas"

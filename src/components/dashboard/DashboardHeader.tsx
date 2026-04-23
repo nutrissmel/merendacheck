@@ -52,13 +52,13 @@ export function DashboardHeader({ user, tenant, periodo, escolaId, escolas }: Da
   }
 
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-[#0F1B2D] font-heading">
+        <h1 className="text-xl md:text-2xl font-bold text-[#0F1B2D] font-heading">
           {texto}, {primeiroNome}! {icone}
         </h1>
         {tenant && (
-          <p className="text-sm text-[#5A7089] mt-0.5">
+          <p className="text-xs md:text-sm text-[#5A7089] mt-0.5">
             {tenant.nome} — {tenant.estado}
           </p>
         )}
@@ -69,7 +69,7 @@ export function DashboardHeader({ user, tenant, periodo, escolaId, escolas }: Da
         <select
           value={escolaId ?? ''}
           onChange={(e) => atualizarFiltro('escola', e.target.value || undefined)}
-          className="h-9 rounded-lg border border-[#D5E3F0] bg-white px-3 text-sm text-[#0F1B2D] focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 cursor-pointer"
+          className="flex-1 min-w-[130px] h-9 rounded-lg border border-[#D5E3F0] bg-white px-3 text-sm text-[#0F1B2D] focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 cursor-pointer"
         >
           <option value="">Todas as escolas</option>
           {escolas.map((e) => (
@@ -83,7 +83,7 @@ export function DashboardHeader({ user, tenant, periodo, escolaId, escolas }: Da
         <select
           value={periodo}
           onChange={(e) => atualizarFiltro('periodo', e.target.value)}
-          className="h-9 rounded-lg border border-[#D5E3F0] bg-white px-3 text-sm text-[#0F1B2D] focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 cursor-pointer"
+          className="flex-1 min-w-[130px] h-9 rounded-lg border border-[#D5E3F0] bg-white px-3 text-sm text-[#0F1B2D] focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 cursor-pointer"
         >
           {PERIODOS.map((p) => (
             <option key={p.value} value={p.value}>
@@ -95,7 +95,7 @@ export function DashboardHeader({ user, tenant, periodo, escolaId, escolas }: Da
         {/* Botão PDF */}
         <button
           onClick={irParaRelatorios}
-          className="h-9 flex items-center gap-1.5 px-3 rounded-lg border border-[#D5E3F0] bg-white text-sm font-medium text-[#0E2E60] hover:bg-[#EEF4FD] transition-colors"
+          className="h-9 flex items-center gap-1.5 px-3 rounded-lg border border-[#D5E3F0] bg-white text-sm font-medium text-[#0E2E60] hover:bg-[#EEF4FD] transition-colors shrink-0"
           title="Exportar relatório"
         >
           <FileDown size={15} />

@@ -87,7 +87,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const podVerEquipe = ['ADMIN_MUNICIPAL', 'NUTRICIONISTA', 'SUPER_ADMIN'].includes(user.papel)
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-0">
       <DashboardHeader
         user={user}
         tenant={tenant}
