@@ -6,7 +6,7 @@ import { Home, ClipboardList, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const tabs = [
-  { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/home-mobile', label: 'Home', icon: Home },
   { href: '/inspecoes', label: 'Inspeções', icon: ClipboardList },
   { href: '/perfil', label: 'Eu', icon: User },
 ]
@@ -23,7 +23,11 @@ export function MobileTabBar() {
     >
       <div className="flex items-center h-[62px]">
         {tabs.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
+          // Home tab is active on both /home-mobile and /dashboard
+          const active =
+            href === '/home-mobile'
+              ? (pathname === '/home-mobile' || pathname === '/dashboard')
+              : (pathname === href || pathname.startsWith(href + '/'))
           return (
             <Link
               key={href}

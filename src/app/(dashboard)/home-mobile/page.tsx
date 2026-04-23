@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { School, CheckCircle2, AlertTriangle, History, ChevronRight, Plus, Clock } from 'lucide-react'
 import { getServerUser } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { format, isToday, isYesterday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -22,11 +21,11 @@ function ultimaLabel(date: Date | null) {
 }
 
 const PAPEL_LABEL: Record<string, string> = {
-  NUTRICIONISTA: 'Nutricionista',
-  MERENDEIRA: 'Merendeira',
+  NUTRICIONISTA:  'Nutricionista',
+  MERENDEIRA:     'Merendeira',
   DIRETOR_ESCOLA: 'Diretor(a)',
-  ADMIN_MUNICIPAL: 'Administrador',
-  SUPER_ADMIN: 'Super Admin',
+  ADMIN_MUNICIPAL:'Administrador',
+  SUPER_ADMIN:    'Super Admin',
 }
 
 const SCORE_STATUS: Record<string, { color: string; bg: string }> = {
@@ -88,12 +87,16 @@ export default async function HomeMobilePage() {
   const emAndamento = inspecoesHoje.filter((i) => i.status === 'EM_ANDAMENTO').length
 
   return (
-    <div className="min-h-screen bg-[#EEF4FD] pb-24">
+    <div className="bg-[#EEF4FD] pb-28">
 
       {/* ── Header premium ─────────────────────────────────────── */}
       <div
-        className="relative px-4 pt-10 pb-7 overflow-hidden"
-        style={{ background: 'linear-gradient(145deg, #0B2550 0%, #0E2E60 55%, #143980 100%)' }}
+        className="relative px-5 overflow-hidden"
+        style={{
+          background: 'linear-gradient(145deg, #0B2550 0%, #0E2E60 55%, #143980 100%)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 2.5rem)',
+          paddingBottom: '1.75rem',
+        }}
       >
         {/* Decorative blobs */}
         <div className="absolute top-0 right-0 w-56 h-56 rounded-full opacity-10 bg-white -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -113,7 +116,7 @@ export default async function HomeMobilePage() {
               {getSaudacao()}, {primeiroNome}!
             </p>
           </div>
-          <span className="text-[22px] leading-none" aria-hidden="true">🍽</span>
+          <span className="text-[22px] leading-none shrink-0" aria-hidden="true">🍽</span>
         </div>
 
         {/* Stats row */}
@@ -167,8 +170,8 @@ export default async function HomeMobilePage() {
             </div>
 
             <div
-              className="bg-white rounded-2xl border border-[#D5E3F0] overflow-hidden"
-              style={{ boxShadow: '0 2px 16px rgba(14,46,96,0.07)' }}
+              className="bg-white rounded-2xl border border-[#D5E3F0]"
+              style={{ boxShadow: '0 2px 16px rgba(14,46,96,0.08)' }}
               role="list"
             >
               {inspecoesHoje.map((insp, i) => {
@@ -181,6 +184,8 @@ export default async function HomeMobilePage() {
                     role="listitem"
                     className={cn(
                       'flex items-center gap-3 px-4 py-3.5 active:bg-[#EEF4FD] transition-colors',
+                      i === 0 && 'rounded-t-2xl',
+                      i === inspecoesHoje.length - 1 && 'rounded-b-2xl',
                       i > 0 && 'border-t border-[#EEF4FD]',
                     )}
                     style={TAP}
@@ -238,7 +243,7 @@ export default async function HomeMobilePage() {
           {escolas.length === 0 ? (
             <div
               className="bg-white rounded-2xl border border-[#D5E3F0] p-8 text-center"
-              style={{ boxShadow: '0 2px 16px rgba(14,46,96,0.07)' }}
+              style={{ boxShadow: '0 2px 16px rgba(14,46,96,0.08)' }}
             >
               <School size={36} className="text-[#C8D9EC] mx-auto mb-2" />
               <p className="text-sm text-[#9DAFC4]">Nenhuma escola cadastrada</p>
@@ -249,20 +254,18 @@ export default async function HomeMobilePage() {
                 const ultima = escola.inspecoes[0]
                 const { text, urgent } = ultimaLabel(ultima?.iniciadaEm ?? null)
                 const sc = ultima?.scoreStatus ? SCORE_STATUS[ultima.scoreStatus] : null
+                const accentColor = urgent ? (ultima ? '#F59E0B' : '#D5E3F0') : '#00963A'
 
                 return (
                   <div
                     key={escola.id}
                     role="listitem"
-                    className="bg-white rounded-2xl border border-[#D5E3F0] overflow-hidden"
-                    style={{ boxShadow: '0 2px 16px rgba(14,46,96,0.07)' }}
+                    className="bg-white rounded-2xl border border-[#D5E3F0]"
+                    style={{
+                      boxShadow: '0 2px 16px rgba(14,46,96,0.08)',
+                      borderTop: `3px solid ${accentColor}`,
+                    }}
                   >
-                    {/* Accent bar top */}
-                    <div
-                      className="h-[3px]"
-                      style={{ backgroundColor: urgent ? (ultima ? '#F59E0B' : '#D5E3F0') : '#00963A' }}
-                    />
-
                     <div className="p-4">
                       <div className="flex items-start gap-3 mb-4">
                         {/* Icon */}
@@ -330,8 +333,6 @@ export default async function HomeMobilePage() {
         </Link>
 
       </div>
-
-      <MobileTabBar />
     </div>
   )
 }
