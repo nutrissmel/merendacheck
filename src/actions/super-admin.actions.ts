@@ -363,6 +363,92 @@ export async function resetarSenhaUsuarioAction(
   }
 }
 
+// ─── Editar / Deletar usuário global ─────────────────────────────────────────
+
+export async function atualizarUsuarioSuperAdminAction(
+  usuarioId: string,
+  data: { nome?: string; email?: string; papel?: string; ativo?: boolean },
+): Promise<{ sucesso: boolean; erro?: string }> {
+  try {
+    await requireSuperAdmin()
+    const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } })
+    if (!usuario) return { sucesso: false, erro: 'Usuário não encontrado' }
+    if (usuario.papel === 'SUPER_ADMIN' && data.ativo === false) {
+      return { sucesso: false, erro: 'Não é possível desativar um Super Admin' }
+    }
+
+    if (data.email && data.email !== usuario.email) {
+      const supabase = getSupabaseAdmin()
+      const { error } = await supabase.auth.admin.updateUserById(usuario.supabaseUserId, {
+        email: data.email,
+      })
+      if (error) return { sucesso: false, erro: error.message }
+    }
+
+    const updateData: Record<string, unknown> = {}
+    if (data.nome !== undefined) updateData.nome = data.nome
+    if (data.email !== undefined) updateData.email = data.email
+    if (data.papel !== undefined && usuario.papel !== 'SUPER_ADMIN') updateData.papel = data.papel as any
+    if (data.ativo !== undefined) updateData.ativo = data.ativo
+
+    await prisma.usuario.update({ where: { id: usuarioId }, data: updateData })
+    revalidatePath('/super-admin/usuarios')
+    return { sucesso: true }
+  } catch (err: any) {
+    return { sucesso: false, erro: err?.message ?? 'Erro ao atualizar usuário' }
+  }
+}
+
+export async function deletarUsuarioSuperAdminAction(
+  usuarioId: string,
+): Promise<{ sucesso: boolean; erro?: string }> {
+  try {
+    await requireSuperAdmin()
+    const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } })
+    if (!usuario) return { sucesso: false, erro: 'Usuário não encontrado' }
+    if (usuario.papel === 'SUPER_ADMIN') {
+      return { sucesso: false, erro: 'Não é possível excluir um Super Admin' }
+    }
+
+    await prisma.usuario.delete({ where: { id: usuarioId } })
+
+    const supabase = getSupabaseAdmin()
+    await supabase.auth.admin.deleteUser(usuario.supabaseUserId)
+
+    revalidatePath('/super-admin/usuarios')
+    return { sucesso: true }
+  } catch (err: any) {
+    return { sucesso: false, erro: err?.message ?? 'Erro ao excluir usuário' }
+  }
+}
+
+export async function enviarResetSenhaLinkAction(
+  usuarioId: string,
+): Promise<{ sucesso: true; link: string } | { sucesso: false; erro: string }> {
+  try {
+    await requireSuperAdmin()
+    const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } })
+    if (!usuario) return { sucesso: false, erro: 'Usuário não encontrado' }
+
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: usuario.email,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/nova-senha`,
+      },
+    })
+
+    if (error || !data?.properties?.action_link) {
+      return { sucesso: false, erro: error?.message ?? 'Falha ao gerar link' }
+    }
+
+    return { sucesso: true, link: data.properties.action_link }
+  } catch (err: any) {
+    return { sucesso: false, erro: err?.message ?? 'Erro ao gerar link de redefinição' }
+  }
+}
+
 // ─── Audit log global ─────────────────────────────────────────────────────────
 
 export async function buscarAuditoriaGlobalAction(pagina = 1, limite = 30) {
