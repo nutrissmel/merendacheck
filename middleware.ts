@@ -24,7 +24,7 @@ const ROTAS_POR_PAPEL: Record<string, string[]> = {
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_ROUTES.includes(pathname)) return true;
   if (pathname.startsWith("/convite/")) return true;
-  if (pathname.startsWith("/api/")) return true;
+  if (pathname.startsWith("/api/webhooks/")) return true;
   if (pathname === "/") return true;
   return false;
 }

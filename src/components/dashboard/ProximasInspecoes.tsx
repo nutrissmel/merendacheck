@@ -43,8 +43,8 @@ export async function ProximasInspecoes() {
   let agendamentos: Awaited<ReturnType<typeof buscarProximasInspecoes>>
   try {
     agendamentos = await buscarProximasInspecoes(6)
-  } catch (e) {
-    return <div className="p-4 text-xs text-red-500 font-mono">ProximasInspecoes erro: {String(e)}</div>
+  } catch {
+    return null
   }
 
   if (agendamentos.length === 0) return null

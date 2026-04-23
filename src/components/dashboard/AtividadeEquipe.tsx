@@ -31,8 +31,8 @@ export async function AtividadeEquipe({ periodo, escolaId }: AtividadeEquipeProp
   let membros: Awaited<ReturnType<typeof buscarAtividadeEquipe>>
   try {
     membros = await buscarAtividadeEquipe({ periodo, escolaId })
-  } catch (e) {
-    return <div className="p-4 text-xs text-red-500 font-mono">AtividadeEquipe erro: {String(e)}</div>
+  } catch {
+    return null
   }
 
   if (membros.length === 0) return null
