@@ -73,13 +73,18 @@ export async function listarEscolas(filtros?: {
   const scoreMap = new Map(scoreMedioData.map((s) => [s.escolaId, s._avg.score]))
 
   const ncsMap = new Map<string, number>()
-  for (const nc of ncsData) {
-    const inspecao = await prisma.inspecao.findUnique({
-      where: { id: nc.inspecaoId },
-      select: { escolaId: true },
+  if (ncsData.length > 0) {
+    const inspecaoIds = ncsData.map((nc) => nc.inspecaoId)
+    const inspecoesEscolas = await prisma.inspecao.findMany({
+      where: { id: { in: inspecaoIds } },
+      select: { id: true, escolaId: true },
     })
-    if (inspecao) {
-      ncsMap.set(inspecao.escolaId, (ncsMap.get(inspecao.escolaId) ?? 0) + nc._count)
+    const inspecaoEscolaMap = new Map(inspecoesEscolas.map((i) => [i.id, i.escolaId]))
+    for (const nc of ncsData) {
+      const escolaId = inspecaoEscolaMap.get(nc.inspecaoId)
+      if (escolaId) {
+        ncsMap.set(escolaId, (ncsMap.get(escolaId) ?? 0) + nc._count)
+      }
     }
   }
 

@@ -68,6 +68,8 @@ model Escola {
   usuariosEscola UsuarioEscola[]
   inspecoes      Inspecao[]
   agendamentos   Agendamento[]
+  @@index([tenantId])
+  @@index([tenantId, ativa])
   @@map("escolas")
 }
 
@@ -96,6 +98,8 @@ model Usuario {
   preferenciasNotif    PreferenciaNotificacao?
   logsAuditoria        LogAuditoria[]
   @@unique([email, tenantId])
+  @@index([tenantId])
+  @@index([tenantId, ativo])
   @@map("usuarios")
 }
 
@@ -195,6 +199,8 @@ model ChecklistModelo {
   itens        ChecklistItem[]
   inspecoes    Inspecao[]
   agendamentos Agendamento[]
+  @@index([tenantId])
+  @@index([tenantId, ativo])
   @@map("checklist_modelos")
 }
 
@@ -242,6 +248,13 @@ model Inspecao {
   sincronizadaEm DateTime?
   respostas        RespostaItem[]
   naoConformidades NaoConformidade[]
+  @@index([tenantId])
+  @@index([escolaId])
+  @@index([inspetorId])
+  @@index([checklistId])
+  @@index([tenantId, status])
+  @@index([tenantId, finalizadaEm])
+  @@index([escolaId, status])
   @@map("inspecoes")
 }
 
@@ -259,6 +272,7 @@ model RespostaItem {
   observacao       String?
   createdAt        DateTime      @default(now())
   @@unique([inspecaoId, itemId])
+  @@index([inspecaoId])
   @@map("respostas_itens")
 }
 
@@ -277,6 +291,10 @@ model NaoConformidade {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   acoes          AcaoCorretiva[]
+  @@index([tenantId])
+  @@index([inspecaoId])
+  @@index([tenantId, status])
+  @@index([tenantId, prazoResolucao])
   @@map("nao_conformidades")
 }
 
@@ -313,6 +331,9 @@ model Agendamento {
   ativo           Boolean         @default(true)
   proximaExecucao DateTime?
   createdAt       DateTime        @default(now())
+  @@index([tenantId])
+  @@index([tenantId, proximaExecucao])
+  @@index([tenantId, ativo])
   @@map("agendamentos")
 }
 
