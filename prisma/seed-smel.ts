@@ -24,7 +24,7 @@ async function main() {
       categoriaPersonalizada: 'SMEL — Nutricionistas',
       frequencia: 'SEMANAL',
       ativo: true,
-      isTemplate: false,
+      isTemplate: true,
       itens: {
         create: [
           // ── 1. Higiene Pessoal ────────────────────────────────────
