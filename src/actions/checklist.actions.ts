@@ -56,14 +56,22 @@ function buildWhereClause(
     apenasPropriosTenant?: boolean
   }
 ) {
+  const PAPEIS_OPERACIONAIS = ['NUTRICIONISTA', 'DIRETOR_ESCOLA', 'MERENDEIRA'] as const
+  const isOperacional = (PAPEIS_OPERACIONAIS as readonly string[]).includes(user.papel)
   const isSuperAdmin = user.papel === 'SUPER_ADMIN'
+
+  // Papéis operacionais veem apenas o Checklist SMEL entre os templates globais
+  const templateFilter = isOperacional
+    ? { isTemplate: true, nome: 'Checklist SMEL' }
+    : { isTemplate: true }
+
   const baseFilter = filtros?.apenasTemplates
-    ? { isTemplate: true }
+    ? templateFilter
     : filtros?.apenasPropriosTenant
     ? { tenantId: user.tenantId, isTemplate: false }
     : isSuperAdmin
     ? {}
-    : { OR: [{ tenantId: user.tenantId }, { isTemplate: true }] }
+    : { OR: [{ tenantId: user.tenantId }, templateFilter] }
 
   return {
     AND: [
