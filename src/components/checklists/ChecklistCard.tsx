@@ -75,7 +75,7 @@ export function ChecklistCard({ checklist, podeEditar, onPreview }: ChecklistCar
     >
       {/* Header card */}
       <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
-        <CategoriaBadge categoria={checklist.categoria} size="sm" />
+        <CategoriaBadge categoria={checklist.categoria} categoriaPersonalizada={checklist.categoriaPersonalizada} size="sm" />
 
         <DropdownMenu>
           <DropdownMenuTrigger className="w-7 h-7 rounded-lg flex items-center justify-center text-[#5A7089] hover:bg-[#EEF4FD] hover:text-[#0E2E60] transition-colors shrink-0">

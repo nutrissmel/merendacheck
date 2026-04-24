@@ -180,17 +180,18 @@ model PreferenciaNotificacao {
 }
 
 model ChecklistModelo {
-  id         String             @id @default(uuid())
-  tenantId   String
-  tenant     Tenant             @relation(fields: [tenantId], references: [id])
-  nome       String
-  descricao  String?
-  categoria  CategoriaChecklist
-  frequencia Frequencia         @default(SEMANAL)
-  ativo      Boolean            @default(true)
-  isTemplate Boolean            @default(false)
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id                     String             @id @default(uuid())
+  tenantId               String
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id])
+  nome                   String
+  descricao              String?
+  categoria              CategoriaChecklist
+  categoriaPersonalizada String?
+  frequencia             Frequencia         @default(SEMANAL)
+  ativo                  Boolean            @default(true)
+  isTemplate             Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
   itens        ChecklistItem[]
   inspecoes    Inspecao[]
   agendamentos Agendamento[]

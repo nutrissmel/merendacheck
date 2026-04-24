@@ -164,7 +164,7 @@ export function BuilderClient({ checklist: inicial }: BuilderClientProps) {
 
         {/* Subtítulo */}
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-          <CategoriaBadge categoria={inicial.categoria} size="sm" />
+          <CategoriaBadge categoria={inicial.categoria} categoriaPersonalizada={inicial.categoriaPersonalizada} size="sm" />
           <span className="text-xs text-[#5A7089]">
             {FREQUENCIA_LABEL[inicial.frequencia]}
           </span>

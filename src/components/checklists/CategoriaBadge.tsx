@@ -3,12 +3,14 @@ import type { CategoriaChecklist } from '@prisma/client'
 
 interface CategoriaBadgeProps {
   categoria: CategoriaChecklist
+  categoriaPersonalizada?: string | null
   size?: 'sm' | 'md'
 }
 
-export function CategoriaBadge({ categoria, size = 'md' }: CategoriaBadgeProps) {
+export function CategoriaBadge({ categoria, categoriaPersonalizada, size = 'md' }: CategoriaBadgeProps) {
   const config = CATEGORIA_CONFIG[categoria]
   const Icone = config.icone
+  const label = (categoria === 'OUTRO' && categoriaPersonalizada) ? categoriaPersonalizada : config.label
 
   const sizeClasses = size === 'sm'
     ? 'text-[10px] px-1.5 py-0.5 gap-1'
@@ -20,10 +22,10 @@ export function CategoriaBadge({ categoria, size = 'md' }: CategoriaBadgeProps) 
     <span
       className={`inline-flex items-center font-semibold rounded-md ${sizeClasses}`}
       style={{ color: config.cor, backgroundColor: config.corFundo }}
-      title={config.descricao}
+      title={label}
     >
       <Icone size={iconSize} />
-      {config.label}
+      {label}
     </span>
   )
 }

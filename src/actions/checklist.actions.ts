@@ -27,6 +27,7 @@ export type ChecklistComContagem = {
   nome: string
   descricao: string | null
   categoria: CategoriaChecklist
+  categoriaPersonalizada: string | null
   frequencia: Frequencia
   ativo: boolean
   isTemplate: boolean
@@ -99,6 +100,7 @@ export async function listarChecklists(filtros?: {
     nome: c.nome,
     descricao: c.descricao,
     categoria: c.categoria,
+    categoriaPersonalizada: c.categoriaPersonalizada,
     frequencia: c.frequencia,
     ativo: c.ativo,
     isTemplate: c.isTemplate,
@@ -135,6 +137,7 @@ export async function buscarChecklistById(
     nome: checklist.nome,
     descricao: checklist.descricao,
     categoria: checklist.categoria,
+    categoriaPersonalizada: checklist.categoriaPersonalizada,
     frequencia: checklist.frequencia,
     ativo: checklist.ativo,
     isTemplate: checklist.isTemplate,
@@ -153,6 +156,7 @@ export async function criarChecklistAction(data: {
   nome: string
   descricao?: string
   categoria: CategoriaChecklist
+  categoriaPersonalizada?: string
   frequencia: Frequencia
 }): Promise<{ sucesso: true; checklistId: string } | { sucesso: false; erro: string }> {
   const user = await requirePapel(['ADMIN_MUNICIPAL', 'NUTRICIONISTA', 'SUPER_ADMIN'])
@@ -167,6 +171,7 @@ export async function criarChecklistAction(data: {
       nome: data.nome.trim(),
       descricao: data.descricao?.trim() || null,
       categoria: data.categoria,
+      categoriaPersonalizada: data.categoria === 'OUTRO' ? (data.categoriaPersonalizada?.trim() || null) : null,
       frequencia: data.frequencia,
       isTemplate: false,
       ativo: true,
@@ -281,6 +286,7 @@ export async function atualizarChecklistAction(
     nome: string
     descricao: string
     categoria: CategoriaChecklist
+    categoriaPersonalizada: string
     frequencia: Frequencia
   }>
 ): Promise<{ sucesso: true } | { sucesso: false; erro: string }> {
@@ -292,6 +298,7 @@ export async function atualizarChecklistAction(
 
   if (!checklist) return { sucesso: false, erro: 'Checklist não encontrado ou sem permissão.' }
 
+  const novaCategoria = data.categoria ?? checklist.categoria
   await prisma.checklistModelo.update({
     where: { id: checklistId },
     data: {
@@ -299,6 +306,9 @@ export async function atualizarChecklistAction(
       ...(data.descricao !== undefined && { descricao: data.descricao.trim() || null }),
       ...(data.categoria !== undefined && { categoria: data.categoria }),
       ...(data.frequencia !== undefined && { frequencia: data.frequencia }),
+      categoriaPersonalizada: novaCategoria === 'OUTRO'
+        ? (data.categoriaPersonalizada?.trim() || null)
+        : null,
     },
   })
 

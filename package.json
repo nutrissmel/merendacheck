@@ -12,7 +12,8 @@
     "test:unit:watch": "vitest",
     "test:unit:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:smel": "tsx prisma/seed-smel.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

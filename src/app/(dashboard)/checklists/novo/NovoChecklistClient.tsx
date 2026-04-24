@@ -25,6 +25,7 @@ interface FormData {
   nome: string
   descricao: string
   categoria: CategoriaChecklist
+  categoriaPersonalizada: string
   frequencia: Frequencia
 }
 
@@ -40,6 +41,7 @@ export function NovoChecklistClient({ templates }: NovoChecklistClientProps) {
     nome: '',
     descricao: '',
     categoria: 'OUTRO',
+    categoriaPersonalizada: '',
     frequencia: 'SEMANAL',
   })
 
@@ -62,7 +64,10 @@ export function NovoChecklistClient({ templates }: NovoChecklistClientProps) {
       return
     }
     startTransition(async () => {
-      const result = await criarChecklistAction(form)
+      const result = await criarChecklistAction({
+        ...form,
+        categoriaPersonalizada: form.categoriaPersonalizada || undefined,
+      })
       if ('erro' in result) {
         toast.error(result.erro)
         return
@@ -238,13 +243,27 @@ export function NovoChecklistClient({ templates }: NovoChecklistClientProps) {
                 </label>
                 <select
                   value={form.categoria}
-                  onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value as CategoriaChecklist }))}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    categoria: e.target.value as CategoriaChecklist,
+                    categoriaPersonalizada: '',
+                  }))}
                   className="w-full h-10 px-3 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 focus:border-[#0E2E60]"
                 >
                   {CATEGORIAS.map(([value, config]) => (
                     <option key={value} value={value}>{config.label}</option>
                   ))}
                 </select>
+                {form.categoria === 'OUTRO' && (
+                  <input
+                    type="text"
+                    value={form.categoriaPersonalizada}
+                    onChange={(e) => setForm((f) => ({ ...f, categoriaPersonalizada: e.target.value }))}
+                    placeholder="Nome da categoria (ex: Merenda Escolar)"
+                    maxLength={50}
+                    className="mt-2 w-full h-10 px-3 text-sm border border-[#0E2E60]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 focus:border-[#0E2E60] bg-[#EEF4FD]/50"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-[#0F1B2D] mb-1.5">
