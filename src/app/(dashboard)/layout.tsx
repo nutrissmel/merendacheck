@@ -5,6 +5,8 @@ import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { TrialBanner } from '@/components/dashboard/TrialBanner'
 import { InstallPWABanner } from '@/components/shared/InstallPWABanner'
 import { BannerNotificacoesPush } from '@/components/shared/BannerNotificacoesPush'
+import { AgendamentosHojeModal } from '@/components/shared/AgendamentosHojeModal'
+import { buscarAgendamentosHoje } from '@/actions/agendamentos.actions'
 import { Suspense } from 'react'
 import prisma from '@/lib/prisma'
 
@@ -17,8 +19,9 @@ export default async function DashboardLayout({
 
   let ncCount = 0
   let ncVencidas = 0
+  let agendamentosHoje: Awaited<ReturnType<typeof buscarAgendamentosHoje>> = []
   try {
-    const [ncCountData, ncVencidasData] = await Promise.all([
+    const [ncCountData, ncVencidasData, agendamentosData] = await Promise.all([
       prisma.naoConformidade.count({
         where: { tenantId: user.tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
       }),
@@ -29,11 +32,13 @@ export default async function DashboardLayout({
           status: { notIn: ['RESOLVIDA'] },
         },
       }),
+      buscarAgendamentosHoje(),
     ])
     ncCount = ncCountData
     ncVencidas = ncVencidasData
+    agendamentosHoje = agendamentosData
   } catch {
-    // NC counts are non-critical; fail gracefully
+    // Non-critical; fail gracefully
   }
 
   const userProps = {
@@ -68,6 +73,9 @@ export default async function DashboardLayout({
 
       {/* Push notification banner — mobile only */}
       <BannerNotificacoesPush />
+
+      {/* Daily briefing — shows agendamentos for today on first app open */}
+      <AgendamentosHojeModal agendamentos={agendamentosHoje} />
     </div>
   )
 }

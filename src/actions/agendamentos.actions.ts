@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import { getServerUser } from '@/lib/auth'
-import { isBefore } from 'date-fns'
+import { isBefore, startOfDay, endOfDay } from 'date-fns'
 import type { Frequencia } from '@prisma/client'
 import { calcularProximaExecucao } from '@/lib/utils'
 
@@ -153,9 +153,26 @@ export async function buscarEscolasEChecklists() {
   return { escolas, checklists }
 }
 
+export async function buscarAgendamentosHoje() {
+  const user = await getServerUser()
+  const hoje = new Date()
+
+  return prisma.agendamento.findMany({
+    where: {
+      tenantId: user.tenantId,
+      ativo: true,
+      proximaExecucao: { gte: startOfDay(hoje), lte: endOfDay(hoje) },
+    },
+    include: {
+      escola: { select: { id: true, nome: true } },
+      checklist: { select: { id: true, nome: true, categoria: true } },
+    },
+    orderBy: { proximaExecucao: 'asc' },
+  })
+}
+
 export async function buscarProximasInspecoes(limite = 5) {
   const user = await getServerUser()
-  const agora = new Date()
 
   return prisma.agendamento.findMany({
     where: {
