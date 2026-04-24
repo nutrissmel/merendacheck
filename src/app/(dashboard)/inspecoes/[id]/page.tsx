@@ -12,6 +12,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import type { CategoriaChecklist } from '@prisma/client'
+import { ExcluirInspecaoButton } from '@/components/inspecao/ExcluirInspecaoButton'
 
 export default async function InspecaoDetalhePage({
   params,
@@ -19,7 +20,8 @@ export default async function InspecaoDetalhePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  await getServerUser()
+  const user = await getServerUser()
+  const isSuperAdmin = user.papel === 'SUPER_ADMIN'
 
   const inspecao = await buscarInspecaoCompleta(id)
   if (!inspecao) notFound()
@@ -88,14 +90,22 @@ export default async function InspecaoDetalhePage({
             </div>
           </div>
 
-          {inspecao.status === 'EM_ANDAMENTO' && (
-            <Link
-              href={`/inspecoes/${id}/responder`}
-              className="px-4 py-2 bg-[#0E2E60] text-white text-sm font-semibold rounded-xl hover:bg-[#133878] transition-colors shrink-0"
-            >
-              Continuar →
-            </Link>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {inspecao.status === 'EM_ANDAMENTO' && (
+              <Link
+                href={`/inspecoes/${id}/responder`}
+                className="px-4 py-2 bg-[#0E2E60] text-white text-sm font-semibold rounded-xl hover:bg-[#133878] transition-colors"
+              >
+                Continuar →
+              </Link>
+            )}
+            {isSuperAdmin && (
+              <ExcluirInspecaoButton
+                inspecaoId={id}
+                escolaNome={inspecao.escola.nome}
+              />
+            )}
+          </div>
         </div>
 
         {/* Dates */}

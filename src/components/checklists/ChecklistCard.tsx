@@ -12,6 +12,7 @@ import {
   PowerOff,
   Shield,
   ChevronRight,
+  Trash2,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -25,21 +26,26 @@ import { CATEGORIA_CONFIG, FREQUENCIA_LABEL } from './CategoriaConfig'
 import {
   toggleChecklistAtivoAction,
   duplicarChecklistAction,
+  excluirChecklistAction,
 } from '@/actions/checklist.actions'
 import type { ChecklistComContagem } from '@/actions/checklist.actions'
+import { ModalConfirmarExclusao } from '@/components/shared/ModalConfirmarExclusao'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 interface ChecklistCardProps {
   checklist: ChecklistComContagem
   podeEditar: boolean
+  isSuperAdmin?: boolean
   onPreview?: (id: string) => void
 }
 
-export function ChecklistCard({ checklist, podeEditar, onPreview }: ChecklistCardProps) {
+export function ChecklistCard({ checklist, podeEditar, isSuperAdmin, onPreview }: ChecklistCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [ativo, setAtivo] = useState(checklist.ativo)
+  const [modalExclusao, setModalExclusao] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
 
   const catConfig = CATEGORIA_CONFIG[checklist.categoria]
   const corBorda = catConfig.cor
@@ -68,7 +74,21 @@ export function ChecklistCard({ checklist, podeEditar, onPreview }: ChecklistCar
     })
   }
 
+  async function handleExcluir(justificativa: string) {
+    setExcluindo(true)
+    const result = await excluirChecklistAction(checklist.id, justificativa)
+    setExcluindo(false)
+    if ('erro' in result) {
+      toast.error(result.erro)
+    } else {
+      toast.success('Checklist excluído.')
+      setModalExclusao(false)
+      router.refresh()
+    }
+  }
+
   return (
+    <>
     <div
       className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(14,46,96,0.06)] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(14,46,96,0.12)] transition-all duration-200 flex flex-col"
       style={{ borderLeftWidth: 4, borderLeftColor: corBorda }}
@@ -118,6 +138,17 @@ export function ChecklistCard({ checklist, podeEditar, onPreview }: ChecklistCar
                   ) : (
                     <><Power size={14} className="text-green-600" /> Ativar</>
                   )}
+                </DropdownMenuItem>
+              </>
+            )}
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                  onSelect={() => setModalExclusao(true)}
+                >
+                  <Trash2 size={14} /> Excluir checklist
                 </DropdownMenuItem>
               </>
             )}
@@ -212,5 +243,16 @@ export function ChecklistCard({ checklist, podeEditar, onPreview }: ChecklistCar
         </Link>
       </div>
     </div>
+
+    <ModalConfirmarExclusao
+      aberto={modalExclusao}
+      titulo={`Excluir "${checklist.nome}"?`}
+      descricao={`Todas as inspeções, respostas, não conformidades e agendamentos vinculados a este checklist também serão excluídos permanentemente.`}
+      placeholder="Ex: Checklist duplicado, criado por engano, substituído por versão atualizada..."
+      carregando={excluindo}
+      onFechar={() => setModalExclusao(false)}
+      onConfirmar={handleExcluir}
+    />
+    </>
   )
 }

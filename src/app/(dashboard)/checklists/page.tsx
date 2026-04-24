@@ -15,6 +15,7 @@ export default async function ChecklistsPage({
   const params = await searchParams
   const user = await getServerUser()
   const podeEditar = ['ADMIN_MUNICIPAL', 'NUTRICIONISTA', 'SUPER_ADMIN'].includes(user.papel)
+  const isSuperAdmin = user.papel === 'SUPER_ADMIN'
 
   const aba = params.aba ?? 'todos'
   const busca = params.busca?.trim() || undefined
@@ -95,6 +96,7 @@ export default async function ChecklistsPage({
               key={checklist.id}
               checklist={checklist}
               podeEditar={podeEditar}
+              isSuperAdmin={isSuperAdmin}
             />
           ))}
         </div>

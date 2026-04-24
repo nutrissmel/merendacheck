@@ -525,3 +525,48 @@ export async function reordenarItensAction(
   revalidatePath(`/checklists/${checklistId}/editar`)
   return { sucesso: true }
 }
+
+// ─── EXCLUIR CHECKLIST (SUPER_ADMIN) ──────────────────────────
+
+export async function excluirChecklistAction(
+  checklistId: string,
+  justificativa: string,
+): Promise<{ sucesso: true } | { sucesso: false; erro: string }> {
+  try {
+    const user = await requirePapel(['SUPER_ADMIN'])
+
+    if (!justificativa || justificativa.trim().length < 10) {
+      return { sucesso: false, erro: 'Justificativa obrigatória (mínimo 10 caracteres).' }
+    }
+
+    const checklist = await prisma.checklistModelo.findUnique({ where: { id: checklistId } })
+    if (!checklist) return { sucesso: false, erro: 'Checklist não encontrado.' }
+
+    await prisma.$transaction(async (tx) => {
+      const inspecaoIds = (await tx.inspecao.findMany({
+        where: { checklistId },
+        select: { id: true },
+      })).map((i) => i.id)
+
+      const ncIds = (await tx.naoConformidade.findMany({
+        where: { inspecaoId: { in: inspecaoIds } },
+        select: { id: true },
+      })).map((n) => n.id)
+
+      await tx.acaoCorretiva.deleteMany({ where: { naoConformidadeId: { in: ncIds } } })
+      await tx.naoConformidade.deleteMany({ where: { inspecaoId: { in: inspecaoIds } } })
+      await tx.respostaItem.deleteMany({ where: { inspecaoId: { in: inspecaoIds } } })
+      await tx.agendamento.deleteMany({ where: { checklistId } })
+      await tx.inspecao.deleteMany({ where: { checklistId } })
+      await tx.checklistItem.deleteMany({ where: { checklistId } })
+      await tx.checklistModelo.delete({ where: { id: checklistId } })
+    })
+
+    console.info(`[SUPER_ADMIN] Checklist "${checklist.nome}" excluído por ${user.email}. Motivo: ${justificativa}`)
+    revalidatePath('/checklists')
+    return { sucesso: true }
+  } catch (err) {
+    console.error('[excluirChecklistAction]', err)
+    return { sucesso: false, erro: 'Erro ao excluir checklist.' }
+  }
+}

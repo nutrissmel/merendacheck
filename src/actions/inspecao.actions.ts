@@ -698,3 +698,43 @@ export async function buscarInspecaoCompleta(inspecaoId: string): Promise<Inspec
     return null
   }
 }
+
+
+// ─── EXCLUIR INSPEÇÃO (SUPER_ADMIN) ─────────────────────────────────────────
+
+export async function excluirInspecaoAction(
+  inspecaoId: string,
+  justificativa: string,
+): Promise<{ sucesso: true } | { sucesso: false; erro: string }> {
+  try {
+    const user = await getServerUser()
+    if (user.papel !== 'SUPER_ADMIN') return { sucesso: false, erro: 'Apenas SUPER_ADMIN pode excluir inspeções.' }
+
+    if (!justificativa || justificativa.trim().length < 10) {
+      return { sucesso: false, erro: 'Justificativa obrigatória (mínimo 10 caracteres).' }
+    }
+
+    const inspecao = await prisma.inspecao.findUnique({ where: { id: inspecaoId } })
+    if (!inspecao) return { sucesso: false, erro: 'Inspeção não encontrada.' }
+
+    await prisma.$transaction(async (tx) => {
+      const ncIds = (await tx.naoConformidade.findMany({
+        where: { inspecaoId },
+        select: { id: true },
+      })).map((n) => n.id)
+
+      await tx.acaoCorretiva.deleteMany({ where: { naoConformidadeId: { in: ncIds } } })
+      await tx.naoConformidade.deleteMany({ where: { inspecaoId } })
+      await tx.respostaItem.deleteMany({ where: { inspecaoId } })
+      await tx.inspecao.delete({ where: { id: inspecaoId } })
+    })
+
+    console.info(`[SUPER_ADMIN] Inspeção ${inspecaoId} excluída por ${user.email}. Motivo: ${justificativa}`)
+    revalidatePath('/inspecoes')
+    revalidatePath('/dashboard')
+    return { sucesso: true }
+  } catch (e) {
+    console.error('[excluirInspecaoAction]', e)
+    return { sucesso: false, erro: 'Erro ao excluir inspeção.' }
+  }
+}
