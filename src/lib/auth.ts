@@ -161,13 +161,11 @@ export function tenantWhere(user: AuthUser): { tenantId?: string } {
 export function getRedirectPorPapel(papel: Papel): string {
   switch (papel) {
     case 'ADMIN_MUNICIPAL':
-    case 'NUTRICIONISTA':
-    case 'SUPER_ADMIN':
       return '/dashboard'
+    case 'NUTRICIONISTA':
     case 'DIRETOR_ESCOLA':
-      return '/escolas'
     case 'MERENDEIRA':
-      return '/inspecoes/nova'
+      return '/checklists'
     default:
       return '/dashboard'
   }
