@@ -158,14 +158,14 @@ export function ChecklistCard({ checklist, podeEditar, isSuperAdmin, onPreview }
               {podeEditar && !checklist.isTemplate && (
                 <DropdownMenuItem
                   className="flex items-center gap-2 cursor-pointer"
-                  onSelect={() => router.push(`/checklists/${checklist.id}/editar`)}
+                  onClick={() => router.push(`/checklists/${checklist.id}/editar`)}
                 >
                   <Pencil size={14} /> Editar checklist
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
                 className="flex items-center gap-2 cursor-pointer"
-                onSelect={handlePreview}
+                onClick={handlePreview}
                 disabled={carregandoPreview}
               >
                 {carregandoPreview ? (
@@ -177,7 +177,7 @@ export function ChecklistCard({ checklist, podeEditar, isSuperAdmin, onPreview }
               {podeEditar && (
                 <DropdownMenuItem
                   className="flex items-center gap-2 cursor-pointer"
-                  onSelect={handleDuplicar}
+                  onClick={handleDuplicar}
                   disabled={isPending}
                 >
                   <Copy size={14} /> Duplicar
@@ -188,7 +188,7 @@ export function ChecklistCard({ checklist, podeEditar, isSuperAdmin, onPreview }
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex items-center gap-2 cursor-pointer"
-                    onSelect={handleToggleAtivo}
+                    onClick={handleToggleAtivo}
                     disabled={isPending}
                   >
                     {ativo ? (
@@ -204,7 +204,7 @@ export function ChecklistCard({ checklist, podeEditar, isSuperAdmin, onPreview }
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                    onSelect={() => setModalExclusao(true)}
+                    onClick={() => setModalExclusao(true)}
                   >
                     <Trash2 size={14} /> Excluir checklist
                   </DropdownMenuItem>
