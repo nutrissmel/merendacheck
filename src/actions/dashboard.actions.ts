@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { getServerUser } from '@/lib/auth'
+import { getServerUser, tenantWhere } from '@/lib/auth'
 import type { ScoreStatus, Severidade, CategoriaChecklist, Papel } from '@prisma/client'
 import { subDays, startOfDay, endOfDay, format, differenceInDays } from 'date-fns'
 
@@ -98,7 +98,7 @@ export async function buscarKPIsDashboard(filtros: {
   const { inicio, fim, inicioPrev, fimPrev } = getPeriodoRange(filtros.periodo)
 
   const whereBase = {
-    tenantId: user.tenantId,
+    ...tenantWhere(user),
     ...(filtros.escolaId ? { escolaId: filtros.escolaId } : {}),
   }
 
@@ -119,23 +119,23 @@ export async function buscarKPIsDashboard(filtros: {
       where: { ...whereBase, status: 'FINALIZADA', finalizadaEm: { gte: inicioPrev, lte: fimPrev } },
       select: { score: true },
     }),
-    prisma.escola.count({ where: { tenantId: user.tenantId, ativa: true } }),
+    prisma.escola.count({ where: { ...tenantWhere(user), ativa: true } }),
     prisma.naoConformidade.count({
-      where: { tenantId: user.tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
+      where: { ...tenantWhere(user), status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
     }),
     prisma.naoConformidade.count({
-      where: { tenantId: user.tenantId, status: 'VENCIDA' },
+      where: { ...tenantWhere(user), status: 'VENCIDA' },
     }),
     prisma.naoConformidade.count({
       where: {
-        tenantId: user.tenantId,
+        ...tenantWhere(user),
         status: 'RESOLVIDA',
         resolvidaEm: { gte: inicio, lte: fim },
       },
     }),
     prisma.naoConformidade.findMany({
       where: {
-        tenantId: user.tenantId,
+        ...tenantWhere(user),
         status: 'RESOLVIDA',
         resolvidaEm: { not: null },
         createdAt: { gte: subDays(new Date(), 90) },
@@ -202,7 +202,7 @@ export async function buscarConformidadeHistorica(filtros: {
 
   const inspecoes = await prisma.inspecao.findMany({
     where: {
-      tenantId: user.tenantId,
+      ...tenantWhere(user),
       status: 'FINALIZADA',
       finalizadaEm: { gte: inicio, lte: fim },
       ...(filtros.escolaId ? { escolaId: filtros.escolaId } : {}),
@@ -254,7 +254,7 @@ export async function buscarHeatmapInspecoes(filtros: {
 
   const inspecoes = await prisma.inspecao.findMany({
     where: {
-      tenantId: user.tenantId,
+      ...tenantWhere(user),
       iniciadaEm: { gte: inicio, lte: fim },
       ...(filtros.escolaId ? { escolaId: filtros.escolaId } : {}),
     },
@@ -295,7 +295,7 @@ export async function buscarRankingEscolas(filtros: {
   const { inicio, fim, inicioPrev, fimPrev } = getPeriodoRange(filtros.periodo as Periodo)
 
   const escolas = await prisma.escola.findMany({
-    where: { tenantId: user.tenantId, ativa: true },
+    where: { ...tenantWhere(user), ativa: true },
     select: {
       id: true,
       nome: true,
@@ -311,7 +311,7 @@ export async function buscarRankingEscolas(filtros: {
   const escolasPrev = await prisma.inspecao.groupBy({
     by: ['escolaId'],
     where: {
-      tenantId: user.tenantId,
+      ...tenantWhere(user),
       status: 'FINALIZADA',
       finalizadaEm: { gte: inicioPrev, lte: fimPrev },
     },
@@ -320,7 +320,7 @@ export async function buscarRankingEscolas(filtros: {
 
   const ncsAbertas = await prisma.naoConformidade.groupBy({
     by: ['inspecaoId'],
-    where: { tenantId: user.tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO', 'VENCIDA'] } },
+    where: { ...tenantWhere(user), status: { in: ['ABERTA', 'EM_ANDAMENTO', 'VENCIDA'] } },
     _count: true,
   })
 
@@ -391,7 +391,7 @@ export async function buscarDistribuicaoNCs(filtros: {
   const { inicio, fim } = getPeriodoRange(filtros.periodo as Periodo)
 
   const whereNC = {
-    tenantId: user.tenantId,
+    ...tenantWhere(user),
     createdAt: { gte: inicio, lte: fim },
     ...(filtros.escolaId
       ? { inspecao: { escolaId: filtros.escolaId } }
@@ -413,7 +413,7 @@ export async function buscarDistribuicaoNCs(filtros: {
       include: { inspecao: { include: { escola: { select: { nome: true } } } } },
     }),
     prisma.naoConformidade.findMany({
-      where: { tenantId: user.tenantId, createdAt: { gte: inicio, lte: fim } },
+      where: { ...tenantWhere(user), createdAt: { gte: inicio, lte: fim } },
       select: { createdAt: true, resolvidaEm: true, status: true },
       orderBy: { createdAt: 'asc' },
     }),
@@ -494,7 +494,7 @@ export async function buscarItensMaisReprovados(filtros: {
   const respostas = await prisma.respostaItem.findMany({
     where: {
       inspecao: {
-        tenantId: user.tenantId,
+        ...tenantWhere(user),
         status: 'FINALIZADA',
         finalizadaEm: { gte: inicio, lte: fim },
         ...(filtros.escolaId ? { escolaId: filtros.escolaId } : {}),
@@ -564,7 +564,7 @@ export async function buscarAtividadeEquipe(filtros: {
 
   const inspecoes = await prisma.inspecao.findMany({
     where: {
-      tenantId: user.tenantId,
+      ...tenantWhere(user),
       status: 'FINALIZADA',
       finalizadaEm: { gte: inicio, lte: fim },
       ...(filtros.escolaId ? { escolaId: filtros.escolaId } : {}),

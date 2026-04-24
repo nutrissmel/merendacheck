@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { getServerUser } from '@/lib/auth'
+import { getServerUser, tenantWhere } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { registrarAuditoria } from '@/lib/auditoria'
 import { createClient } from '@supabase/supabase-js'
@@ -207,7 +207,7 @@ export async function listarNaoConformidades(filtros?: {
   const skip = (pagina - 1) * porPagina
 
   const where = {
-    tenantId: user.tenantId,
+    ...tenantWhere(user),
     ...(filtros?.escolaId && {
       inspecao: { escolaId: filtros.escolaId },
     }),
@@ -260,15 +260,15 @@ export async function listarNaoConformidades(filtros?: {
       take: porPagina,
     }),
     prisma.naoConformidade.count({ where }),
-    prisma.naoConformidade.count({ where: { tenantId: user.tenantId, status: 'ABERTA' } }),
+    prisma.naoConformidade.count({ where: { ...tenantWhere(user), status: 'ABERTA' } }),
     prisma.naoConformidade.count({
       where: {
-        tenantId: user.tenantId,
+        ...tenantWhere(user),
         prazoResolucao: { lt: agora },
         status: { notIn: ['RESOLVIDA'] },
       },
     }),
-    prisma.naoConformidade.count({ where: { tenantId: user.tenantId, status: 'RESOLVIDA' } }),
+    prisma.naoConformidade.count({ where: { ...tenantWhere(user), status: 'RESOLVIDA' } }),
   ])
 
   let ncs = ncsRaw.map(mapNcResumo)
@@ -801,7 +801,7 @@ export async function buscarMetricasNC(filtros?: {
     ? { inspecao: { escolaId: filtros.escolaId } }
     : {}
 
-  const baseWhere = { tenantId: user.tenantId, ...escolaFilter }
+  const baseWhere = { ...tenantWhere(user), ...escolaFilter }
 
   const [totalAberta, totalVencida, totalResolvida, resolvidasComData, porSeveridade, ncsEscola] =
     await Promise.all([

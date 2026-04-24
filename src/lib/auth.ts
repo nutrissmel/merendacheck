@@ -146,6 +146,16 @@ export async function verificarAcessoEscola(
 }
 
 /**
+ * Retorna filtro de tenantId para queries Prisma.
+ * SUPER_ADMIN vê dados de todos os tenants (retorna {}).
+ * Demais papéis filtram pelo próprio tenant.
+ */
+export function tenantWhere(user: AuthUser): { tenantId?: string } {
+  if (user.papel === 'SUPER_ADMIN') return {}
+  return { tenantId: user.tenantId }
+}
+
+/**
  * Retorna URL de redirect após login baseado no papel
  */
 export function getRedirectPorPapel(papel: Papel): string {

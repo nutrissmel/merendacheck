@@ -1,7 +1,8 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { requirePapel, getServerUser } from '@/lib/auth'
+import { requirePapel, getServerUser, tenantWhere } from '@/lib/auth'
+import type { AuthUser } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import type { CategoriaChecklist, Frequencia, TipoResposta, ChecklistItem } from '@prisma/client'
 
@@ -45,7 +46,7 @@ export type ChecklistDetalhado = ChecklistComContagem & {
 // ─── HELPERS ──────────────────────────────────────────────────
 
 function buildWhereClause(
-  user: { tenantId: string },
+  user: AuthUser,
   filtros?: {
     busca?: string
     categoria?: CategoriaChecklist
@@ -55,10 +56,13 @@ function buildWhereClause(
     apenasPropriosTenant?: boolean
   }
 ) {
+  const isSuperAdmin = user.papel === 'SUPER_ADMIN'
   const baseFilter = filtros?.apenasTemplates
     ? { isTemplate: true }
     : filtros?.apenasPropriosTenant
     ? { tenantId: user.tenantId, isTemplate: false }
+    : isSuperAdmin
+    ? {}
     : { OR: [{ tenantId: user.tenantId }, { isTemplate: true }] }
 
   return {

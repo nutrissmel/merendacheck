@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { getServerUser } from '@/lib/auth'
+import { getServerUser, tenantWhere } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { calcularScore } from '@/lib/utils'
@@ -492,7 +492,7 @@ export async function listarInspecoes(filtros?: {
 
     const isAdmin = ['SUPER_ADMIN', 'ADMIN_MUNICIPAL', 'NUTRICIONISTA'].includes(user.papel)
 
-    const where: any = { tenantId: user.tenantId }
+    const where: any = { ...tenantWhere(user) }
 
     if (!isAdmin) {
       if (user.papel === 'MERENDEIRA') where.inspetorId = user.id

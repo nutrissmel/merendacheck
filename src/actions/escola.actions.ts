@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { requirePapel, getServerUser } from '@/lib/auth'
+import { requirePapel, getServerUser, tenantWhere } from '@/lib/auth'
 import { escolaSchema, escolaUpdateSchema } from '@/lib/validations'
 import { podeAdicionarEscola } from '@/lib/plano'
 import { revalidatePath } from 'next/cache'
@@ -27,7 +27,7 @@ export async function listarEscolas(filtros?: {
 
   const escolas = await prisma.escola.findMany({
     where: {
-      tenantId: user.tenantId,
+      ...tenantWhere(user),
       ...(filtros?.ativa !== undefined ? { ativa: filtros.ativa } : {}),
       ...(filtros?.busca ? { nome: { contains: filtros.busca, mode: 'insensitive' } } : {}),
       ...(filtros?.turno ? { turnos: { has: filtros.turno } } : {}),
