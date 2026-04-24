@@ -233,8 +233,11 @@ model Inspecao {
   scoreStatus   ScoreStatus?
   iniciadaEm    DateTime        @default(now())
   finalizadaEm  DateTime?
-  latLng        String?
-  assinaturaUrl String?
+  latLng                     String?
+  assinaturaUrl              String?
+  assinaturaDiretorUrl       String?
+  assinaturaNutricionistaUrl String?
+  relatorioFinal             String?
   clienteId     String?         @unique
   sincronizadaEm DateTime?
   respostas        RespostaItem[]

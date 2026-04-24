@@ -96,6 +96,9 @@ export const salvarRespostaSchema = z.object({
 export const finalizarInspecaoSchema = z.object({
   inspecaoId: z.string().uuid(),
   assinaturaUrl: z.string().url().optional().or(z.literal('')),
+  assinaturaDiretorUrl: z.string().url().optional().or(z.literal('')),
+  assinaturaNutricionistaUrl: z.string().url().optional().or(z.literal('')),
+  relatorioFinal: z.string().max(3000).optional(),
   latLng: z.string().regex(/^-?\d+\.\d+,-?\d+\.\d+$/).optional(),
 })
 

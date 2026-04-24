@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, CheckCircle2, AlertCircle,
-  Loader2, Trash2, AlertTriangle,
+  Loader2, Trash2, AlertTriangle, FileText, User, Stethoscope,
 } from 'lucide-react'
 import { finalizarInspecaoAction } from '@/actions/inspecao.actions'
 import { toast } from 'sonner'
@@ -55,7 +55,10 @@ export function FinalizacaoMobile({
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [assinaturaDataUrl, setAssinaturaDataUrl] = useState<string | null>(null)
+
+  const [relatorioFinal, setRelatorioFinal] = useState('')
+  const [assinaturaDiretorDataUrl, setAssinaturaDiretorDataUrl] = useState<string | null>(null)
+  const [assinaturaNutricionistaDataUrl, setAssinaturaNutricionistaDataUrl] = useState<string | null>(null)
 
   const statusCfg = STATUS_CONFIG[scoreStatus] ?? STATUS_CONFIG.NAO_CONFORME
   const podeFinalizar = itensPendentes.length === 0
@@ -65,7 +68,9 @@ export function FinalizacaoMobile({
     startTransition(async () => {
       const result = await finalizarInspecaoAction({
         inspecaoId,
-        assinaturaUrl: assinaturaDataUrl ?? undefined,
+        assinaturaDiretorUrl: assinaturaDiretorDataUrl ?? undefined,
+        assinaturaNutricionistaUrl: assinaturaNutricionistaDataUrl ?? undefined,
+        relatorioFinal: relatorioFinal.trim() || undefined,
       })
 
       if ('erro' in result) {
@@ -104,7 +109,6 @@ export function FinalizacaoMobile({
           className="bg-white mx-4 mt-4 rounded-2xl border border-[#D5E3F0] p-5 flex items-center gap-4"
           style={{ boxShadow: '0 2px 16px rgba(14,46,96,0.07)' }}
         >
-          {/* Ring */}
           <div className="shrink-0 relative" style={{ width: 96, height: 96 }}>
             <svg width="96" height="96" viewBox="0 0 96 96" className="absolute inset-0 -rotate-90">
               <circle cx="48" cy="48" r="44" fill="none" stroke="#EEF4FD" strokeWidth="6" />
@@ -123,8 +127,6 @@ export function FinalizacaoMobile({
               <span className="text-[9px] text-[#9DAFC4] font-medium uppercase tracking-wider mt-0.5">score</span>
             </div>
           </div>
-
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <p className="font-bold text-base leading-none mb-1" style={{ color: statusCfg.color }}>
               {statusCfg.label}
@@ -187,18 +189,64 @@ export function FinalizacaoMobile({
           </div>
         )}
 
-        {/* ── Signature ──────────────────────────────────────────── */}
+        {/* ── Relatório Final ─────────────────────────────────────── */}
         <div
           className="mx-4 mt-3 bg-white rounded-2xl border border-[#D5E3F0] overflow-hidden"
           style={{ boxShadow: '0 2px 12px rgba(14,46,96,0.06)' }}
         >
-          <div className="px-4 py-3 border-b border-[#EEF4FD]">
-            <p className="text-sm font-bold text-[#0F1B2D]">Assinatura <span className="text-[#9DAFC4] font-normal">(opcional)</span></p>
+          <div className="px-4 py-3 border-b border-[#EEF4FD] flex items-center gap-2">
+            <FileText size={14} className="text-[#0E2E60]" />
+            <p className="text-sm font-bold text-[#0F1B2D]">
+              Relatório Final <span className="text-[#9DAFC4] font-normal">(opcional)</span>
+            </p>
+          </div>
+          <div className="p-4">
+            <textarea
+              value={relatorioFinal}
+              onChange={(e) => setRelatorioFinal(e.target.value)}
+              placeholder="Descreva as observações gerais da inspeção, condições encontradas, recomendações e ocorrências relevantes..."
+              maxLength={3000}
+              rows={5}
+              className="w-full resize-none rounded-xl border border-[#D5E3F0] bg-[#F8FBFF] px-3 py-2.5 text-sm text-[#0F1B2D] placeholder-[#9DAFC4] focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 focus:border-[#0E2E60] transition-colors"
+            />
+            <p className="text-right text-xs text-[#9DAFC4] mt-1">{relatorioFinal.length}/3000</p>
+          </div>
+        </div>
+
+        {/* ── Assinatura Diretor/Supervisor ───────────────────────── */}
+        <div
+          className="mx-4 mt-3 bg-white rounded-2xl border border-[#D5E3F0] overflow-hidden"
+          style={{ boxShadow: '0 2px 12px rgba(14,46,96,0.06)' }}
+        >
+          <div className="px-4 py-3 border-b border-[#EEF4FD] flex items-center gap-2">
+            <User size={14} className="text-[#0E2E60]" />
+            <p className="text-sm font-bold text-[#0F1B2D]">
+              Assinatura Diretor/Supervisor <span className="text-[#9DAFC4] font-normal">(opcional)</span>
+            </p>
           </div>
           <div className="p-4">
             <AssinaturaMobile
-              onAssinado={setAssinaturaDataUrl}
-              onLimpar={() => setAssinaturaDataUrl(null)}
+              onAssinado={setAssinaturaDiretorDataUrl}
+              onLimpar={() => setAssinaturaDiretorDataUrl(null)}
+            />
+          </div>
+        </div>
+
+        {/* ── Assinatura Nutricionista ────────────────────────────── */}
+        <div
+          className="mx-4 mt-3 bg-white rounded-2xl border border-[#D5E3F0] overflow-hidden"
+          style={{ boxShadow: '0 2px 12px rgba(14,46,96,0.06)' }}
+        >
+          <div className="px-4 py-3 border-b border-[#EEF4FD] flex items-center gap-2">
+            <Stethoscope size={14} className="text-[#0E2E60]" />
+            <p className="text-sm font-bold text-[#0F1B2D]">
+              Assinatura Nutricionista <span className="text-[#9DAFC4] font-normal">(opcional)</span>
+            </p>
+          </div>
+          <div className="p-4">
+            <AssinaturaMobile
+              onAssinado={setAssinaturaNutricionistaDataUrl}
+              onLimpar={() => setAssinaturaNutricionistaDataUrl(null)}
             />
           </div>
         </div>

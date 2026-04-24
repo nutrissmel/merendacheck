@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, CheckCircle2, AlertCircle, MapPin, PenLine,
-  Loader2, X,
+  Loader2, X, FileText, User, Stethoscope,
 } from 'lucide-react'
 import { finalizarInspecaoAction } from '@/actions/inspecao.actions'
 import { AssinaturaCanvas } from '@/components/inspecao/AssinaturaCanvas'
@@ -30,20 +30,39 @@ export function FinalizarClient({
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [assinaturaUrl, setAssinaturaUrl] = useState<string | null>(null)
-  const [assinado, setAssinado] = useState(false)
-  const [mostrarAssinatura, setMostrarAssinatura] = useState(false)
+
+  // Localização
   const [capturandoLoc, setCapturandoLoc] = useState(false)
   const [latLng, setLatLng] = useState<string | null>(null)
   const [locErroCodigo, setLocErroCodigo] = useState<number | null>(null)
 
+  // Relatório final
+  const [relatorioFinal, setRelatorioFinal] = useState('')
+
+  // Assinatura Diretor/Supervisor
+  const [assinaturaDiretorUrl, setAssinaturaDiretorUrl] = useState<string | null>(null)
+  const [assinaturaDiretorAssinado, setAssinaturaDiretorAssinado] = useState(false)
+  const [mostrarAssinaturaDiretor, setMostrarAssinaturaDiretor] = useState(false)
+
+  // Assinatura Nutricionista
+  const [assinaturaNutricionistaUrl, setAssinaturaNutricionistaUrl] = useState<string | null>(null)
+  const [assinaturaNutricionistaAssinado, setAssinaturaNutricionistaAssinado] = useState(false)
+  const [mostrarAssinaturaNutricionista, setMostrarAssinaturaNutricionista] = useState(false)
+
   const podeFinalizar = itensPendentes.length === 0
 
-  function handleAssinado(dataUrl: string) {
-    setAssinaturaUrl(dataUrl)
-    setAssinado(true)
-    setMostrarAssinatura(false)
-    toast.success('Assinatura capturada!')
+  function handleAssinadoDiretor(dataUrl: string) {
+    setAssinaturaDiretorUrl(dataUrl)
+    setAssinaturaDiretorAssinado(true)
+    setMostrarAssinaturaDiretor(false)
+    toast.success('Assinatura do Diretor capturada!')
+  }
+
+  function handleAssinadoNutricionista(dataUrl: string) {
+    setAssinaturaNutricionistaUrl(dataUrl)
+    setAssinaturaNutricionistaAssinado(true)
+    setMostrarAssinaturaNutricionista(false)
+    toast.success('Assinatura da Nutricionista capturada!')
   }
 
   async function capturarLocalizacao() {
@@ -65,7 +84,6 @@ export function FinalizarClient({
       setLocErroCodigo(err.code)
     }
 
-    // Tenta primeiro com alta precisão; se falhar, tenta com baixa precisão (funciona em desktops)
     navigator.geolocation.getCurrentPosition(
       onSuccess,
       () => {
@@ -83,7 +101,9 @@ export function FinalizarClient({
     startTransition(async () => {
       const result = await finalizarInspecaoAction({
         inspecaoId,
-        assinaturaUrl: assinaturaUrl ?? undefined,
+        assinaturaDiretorUrl: assinaturaDiretorUrl ?? undefined,
+        assinaturaNutricionistaUrl: assinaturaNutricionistaUrl ?? undefined,
+        relatorioFinal: relatorioFinal.trim() || undefined,
         latLng: latLng ?? undefined,
       })
 
@@ -105,6 +125,7 @@ export function FinalizarClient({
         <ArrowLeft size={14} /> Voltar à inspeção
       </button>
 
+      {/* Header */}
       <div className="bg-white border border-[#D5E3F0] rounded-xl p-5 space-y-1">
         <h1 className="text-xl font-bold text-[#0F1B2D] font-heading">Finalizar Inspeção</h1>
         <p className="text-sm text-[#5A7089]">{escolaNome} · {checklistNome}</p>
@@ -142,10 +163,10 @@ export function FinalizarClient({
         </div>
       )}
 
-      {/* Optional: Location */}
+      {/* Localização (opcional) */}
       <div className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3">
         <h3 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
-          <MapPin size={15} className="text-blue-800" /> Localização (opcional)
+          <MapPin size={15} className="text-blue-800" /> Localização <span className="font-normal text-neutral-400">(opcional)</span>
         </h3>
         {latLng ? (
           <div className="flex items-center gap-2">
@@ -156,13 +177,13 @@ export function FinalizarClient({
               <X size={14} />
             </button>
           </div>
-        ) : locErroCodigo === 1 /* PERMISSION_DENIED */ ? (
+        ) : locErroCodigo === 1 ? (
           <div className="space-y-2">
             <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
               <AlertCircle size={14} className="shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-semibold">Permissão de localização bloqueada</p>
-                <p className="text-amber-700">Clique no ícone 🔒 na barra de endereço do navegador → <strong>Permissões do site</strong> → <strong>Localização</strong> → <strong>Permitir</strong> e recarregue a página.</p>
+                <p className="text-amber-700">Clique no ícone 🔒 na barra de endereço → <strong>Permissões do site</strong> → <strong>Localização</strong> → <strong>Permitir</strong> e recarregue a página.</p>
               </div>
             </div>
             <p className="text-xs text-neutral-500">A localização é opcional — você pode finalizar sem ela.</p>
@@ -194,29 +215,44 @@ export function FinalizarClient({
         )}
       </div>
 
-      {/* Optional: Signature */}
+      {/* Relatório Final */}
       <div className="bg-white border border-[#D5E3F0] rounded-xl p-4 space-y-3">
         <h3 className="text-sm font-semibold text-[#0F1B2D] flex items-center gap-2">
-          <PenLine size={15} className="text-[#0E2E60]" /> Assinatura (opcional)
+          <FileText size={15} className="text-[#0E2E60]" /> Relatório Final <span className="font-normal text-neutral-400">(opcional)</span>
         </h3>
+        <textarea
+          value={relatorioFinal}
+          onChange={(e) => setRelatorioFinal(e.target.value)}
+          placeholder="Descreva as observações gerais da inspeção, condições encontradas, recomendações e quaisquer ocorrências relevantes..."
+          maxLength={3000}
+          rows={6}
+          className="w-full resize-none rounded-lg border border-[#D5E3F0] bg-[#F8FBFF] px-3 py-2.5 text-sm text-[#0F1B2D] placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0E2E60]/20 focus:border-[#0E2E60] transition-colors"
+        />
+        <p className="text-right text-xs text-neutral-400">{relatorioFinal.length}/3000</p>
+      </div>
 
-        {assinado ? (
+      {/* Assinatura Diretor/Supervisor */}
+      <div className="bg-white border border-[#D5E3F0] rounded-xl p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-[#0F1B2D] flex items-center gap-2">
+          <User size={15} className="text-[#0E2E60]" /> Assinatura Diretor/Supervisor <span className="font-normal text-neutral-400">(opcional)</span>
+        </h3>
+        {assinaturaDiretorAssinado ? (
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1.5 text-sm text-[#00963A] font-medium">
               <CheckCircle2 size={15} /> Assinatura capturada
             </span>
             <button
-              onClick={() => { setAssinado(false); setAssinaturaUrl(null) }}
+              onClick={() => { setAssinaturaDiretorAssinado(false); setAssinaturaDiretorUrl(null) }}
               className="text-xs text-[#5A7089] hover:text-red-500 underline"
             >
               Refazer
             </button>
           </div>
-        ) : mostrarAssinatura ? (
+        ) : mostrarAssinaturaDiretor ? (
           <div className="space-y-2">
-            <AssinaturaCanvas onAssinado={handleAssinado} />
+            <AssinaturaCanvas onAssinado={handleAssinadoDiretor} />
             <button
-              onClick={() => setMostrarAssinatura(false)}
+              onClick={() => setMostrarAssinaturaDiretor(false)}
               className="text-xs text-[#5A7089] hover:text-[#0E2E60]"
             >
               Cancelar
@@ -224,7 +260,7 @@ export function FinalizarClient({
           </div>
         ) : (
           <button
-            onClick={() => setMostrarAssinatura(true)}
+            onClick={() => setMostrarAssinaturaDiretor(true)}
             className="flex items-center gap-2 px-3 py-2 border border-[#D5E3F0] rounded-lg text-sm text-[#0E2E60] hover:bg-[#EEF4FD] transition-colors"
           >
             <PenLine size={14} /> Adicionar assinatura
@@ -232,7 +268,44 @@ export function FinalizarClient({
         )}
       </div>
 
-      {/* Finalize button */}
+      {/* Assinatura Nutricionista */}
+      <div className="bg-white border border-[#D5E3F0] rounded-xl p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-[#0F1B2D] flex items-center gap-2">
+          <Stethoscope size={15} className="text-[#0E2E60]" /> Assinatura Nutricionista <span className="font-normal text-neutral-400">(opcional)</span>
+        </h3>
+        {assinaturaNutricionistaAssinado ? (
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-sm text-[#00963A] font-medium">
+              <CheckCircle2 size={15} /> Assinatura capturada
+            </span>
+            <button
+              onClick={() => { setAssinaturaNutricionistaAssinado(false); setAssinaturaNutricionistaUrl(null) }}
+              className="text-xs text-[#5A7089] hover:text-red-500 underline"
+            >
+              Refazer
+            </button>
+          </div>
+        ) : mostrarAssinaturaNutricionista ? (
+          <div className="space-y-2">
+            <AssinaturaCanvas onAssinado={handleAssinadoNutricionista} />
+            <button
+              onClick={() => setMostrarAssinaturaNutricionista(false)}
+              className="text-xs text-[#5A7089] hover:text-[#0E2E60]"
+            >
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setMostrarAssinaturaNutricionista(true)}
+            className="flex items-center gap-2 px-3 py-2 border border-[#D5E3F0] rounded-lg text-sm text-[#0E2E60] hover:bg-[#EEF4FD] transition-colors"
+          >
+            <PenLine size={14} /> Adicionar assinatura
+          </button>
+        )}
+      </div>
+
+      {/* Finalizar */}
       <button
         onClick={finalizar}
         disabled={!podeFinalizar || isPending}

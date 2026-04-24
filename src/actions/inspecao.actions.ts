@@ -33,6 +33,9 @@ export type SalvarRespostaInput = {
 export type FinalizarInspecaoInput = {
   inspecaoId: string
   assinaturaUrl?: string
+  assinaturaDiretorUrl?: string
+  assinaturaNutricionistaUrl?: string
+  relatorioFinal?: string
   latLng?: string
 }
 
@@ -339,7 +342,7 @@ export async function finalizarInspecaoAction(input: FinalizarInspecaoInput) {
     if (!parsed.success) {
       return { erro: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
     }
-    const { inspecaoId, assinaturaUrl, latLng } = parsed.data
+    const { inspecaoId, assinaturaUrl, assinaturaDiretorUrl, assinaturaNutricionistaUrl, relatorioFinal, latLng } = parsed.data
 
     const inspecao = await prisma.inspecao.findFirst({
       where: { id: inspecaoId, tenantId: user.tenantId, status: 'EM_ANDAMENTO' },
@@ -416,6 +419,9 @@ export async function finalizarInspecaoAction(input: FinalizarInspecaoInput) {
           score: Math.round(score * 10) / 10,
           scoreStatus,
           assinaturaUrl: assinaturaUrl || null,
+          assinaturaDiretorUrl: assinaturaDiretorUrl || null,
+          assinaturaNutricionistaUrl: assinaturaNutricionistaUrl || null,
+          relatorioFinal: relatorioFinal || null,
           latLng: latLng || null,
         },
       })
