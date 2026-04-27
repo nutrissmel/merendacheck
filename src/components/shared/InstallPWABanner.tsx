@@ -11,14 +11,11 @@ interface Props {
   papel: Papel
 }
 
-export function InstallPWABanner({ papel }: Props) {
+export function InstallPWABanner({ papel: _ }: Props) {
   const [show, setShow] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
 
-  const elegivel = ['MERENDEIRA', 'DIRETOR_ESCOLA'].includes(papel)
-
   useEffect(() => {
-    if (!elegivel) return
 
     // Already in standalone mode (installed)
     if (window.matchMedia('(display-mode: standalone)').matches) return
