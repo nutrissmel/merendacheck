@@ -25,66 +25,83 @@ import {
   RankingEscolasSkeleton,
 } from '@/components/dashboard/DashboardSkeleton'
 
+type Periodo = '7d' | '30d' | '60d' | '90d'
+type PeriodoNCs = '30d' | '90d'
+type PeriodoRanking = '7d' | '30d' | '90d'
+
+function normNC(p: Periodo): PeriodoNCs { return (p === '7d' || p === '60d') ? '30d' : p as PeriodoNCs }
+function normRanking(p: Periodo): PeriodoRanking { return p === '60d' ? '30d' : p as PeriodoRanking }
+
+// ─── Async Section Components — cada um faz seu próprio fetch ──
+// O Next.js renderiza o shell imediatamente e streama cada seção à medida que resolve.
+
+async function SectionKPIs({ periodo, escolaId }: { periodo: Periodo; escolaId?: string }) {
+  const kpis = await buscarKPIsDashboard({ periodo, escolaId })
+  return <SecaoKPIs kpis={kpis} />
+}
+
+async function SectionConformidade({ periodo, escolaId }: { periodo: Periodo; escolaId?: string }) {
+  const dados = await buscarConformidadeHistorica({ periodo, escolaId })
+  return <GraficoConformidade dados={dados} periodo={periodo} />
+}
+
+async function SectionNCSeveridade({ periodo, escolaId }: { periodo: PeriodoNCs; escolaId?: string }) {
+  const dados = await buscarDistribuicaoNCs({ periodo, escolaId })
+  return <GraficoNCSeveridade dadosSeveridade={dados.porSeveridade} dadosCategoria={dados.porCategoria} />
+}
+
+async function SectionRanking({ periodo }: { periodo: PeriodoRanking }) {
+  const escolas = await buscarRankingEscolas({ periodo })
+  return <RankingEscolas escolas={escolas} />
+}
+
+async function SectionEvolucaoItensMais({ periodo, escolaId, podVerKPIs }: {
+  periodo: PeriodoNCs
+  escolaId?: string
+  podVerKPIs: boolean
+}) {
+  const [distribuicao, itensMais] = await Promise.all([
+    buscarDistribuicaoNCs({ periodo, escolaId }),
+    buscarItensMaisReprovados({ periodo, escolaId }),
+  ])
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <GraficoEvolucaoNCs dados={distribuicao.evolucao} />
+      <ItensMaisReprovados itens={itensMais} totalInspecoes={itensMais.reduce((s, i) => s + i.totalReprovacoes, 0)} />
+    </div>
+  )
+}
+
+const CardSkeleton = () => (
+  <div className="bg-white border border-[#D5E3F0] rounded-xl h-72 animate-pulse" />
+)
+
+// ─── Page ─────────────────────────────────────────────────────
+
 type SearchParams = Promise<{ periodo?: string; escola?: string }>
 
 export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams
-  const periodo = (params.periodo as '7d' | '30d' | '60d' | '90d') ?? '30d'
+  const periodo = (params.periodo as Periodo) ?? '30d'
   const escolaId = params.escola
 
-  // eslint-disable-next-line prefer-const
-  let user = {} as Awaited<ReturnType<typeof getServerUser>>
-  let escolas: { id: string; nome: string }[] = []
-  let tenant: { nome: string; estado: string } | null = null
-  let kpis: Awaited<ReturnType<typeof buscarKPIsDashboard>> | null = null
-  let conformidadeHistorica: Awaited<ReturnType<typeof buscarConformidadeHistorica>> = []
-  let rankingEscolas: Awaited<ReturnType<typeof buscarRankingEscolas>> = []
-  let distribuicaoNCs: Awaited<ReturnType<typeof buscarDistribuicaoNCs>> = { porSeveridade: [], porCategoria: [], porEscola: [], evolucao: [] }
-  let itensMaisReprovados: Awaited<ReturnType<typeof buscarItensMaisReprovados>> = []
-
-  try {
-    user = await getServerUser()
-  } catch (e) {
-    return <div className="p-8 text-red-600 font-mono text-sm whitespace-pre-wrap">Erro getServerUser: {String(e)}</div>
-  }
-
-  try {
-    const [escolasData, tenantData] = await Promise.all([
-      prisma.escola.findMany({
-        where: { tenantId: user.tenantId, ativa: true },
-        select: { id: true, nome: true },
-        orderBy: { nome: 'asc' },
-      }),
-      prisma.tenant.findUnique({
-        where: { id: user.tenantId },
-        select: { nome: true, estado: true },
-      }),
-    ])
-    escolas = escolasData
-    tenant = tenantData
-  } catch (e) {
-    return <div className="p-8 text-red-600 font-mono text-sm whitespace-pre-wrap">Erro ao buscar escola/tenant: {String(e)}</div>
-  }
-
-  try {
-    const [kpisData, conformidadeData, rankingData, distribuicaoData, itensMaisData] =
-      await Promise.all([
-        buscarKPIsDashboard({ periodo, escolaId }),
-        buscarConformidadeHistorica({ periodo, escolaId }),
-        buscarRankingEscolas({ periodo: periodo === '60d' ? '30d' : periodo }),
-        buscarDistribuicaoNCs({ periodo: periodo === '7d' || periodo === '60d' ? '30d' : (periodo as '30d' | '90d') }),
-        buscarItensMaisReprovados({ periodo: periodo === '7d' || periodo === '60d' ? '30d' : (periodo as '30d' | '90d'), escolaId }),
-      ])
-    kpis = kpisData
-    conformidadeHistorica = conformidadeData
-    rankingEscolas = rankingData
-    distribuicaoNCs = distribuicaoData
-    itensMaisReprovados = itensMaisData
-  } catch (e) {
-    return <div className="p-8 text-red-600 font-mono text-sm whitespace-pre-wrap">Erro nas actions do dashboard: {String(e)}{e instanceof Error && e.stack ? '\n\nStack:\n' + e.stack : ''}</div>
-  }
+  // Somente queries leves aqui — shell renderiza em ~100ms
+  const user = await getServerUser()
+  const [escolas, tenant] = await Promise.all([
+    prisma.escola.findMany({
+      where: { tenantId: user.tenantId, ativa: true },
+      select: { id: true, nome: true },
+      orderBy: { nome: 'asc' },
+    }),
+    prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: { nome: true, estado: true },
+    }),
+  ])
 
   const podVerEquipe = ['ADMIN_MUNICIPAL', 'NUTRICIONISTA', 'SUPER_ADMIN'].includes(user.papel)
+  const periodoNCs = normNC(periodo)
+  const periodoRanking = normRanking(periodo)
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-0">
@@ -96,44 +113,52 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
         escolas={escolas}
       />
 
+      {/* KPIs — stream assim que resolver */}
       <Suspense fallback={<KPIsSkeleton />}>
-        <SecaoKPIs kpis={kpis} />
+        <SectionKPIs periodo={periodo} escolaId={escolaId} />
       </Suspense>
 
+      {/* Gráfico de conformidade + NC por severidade — stream em paralelo */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Suspense fallback={<GraficoConformidadeSkeleton />}>
-            <GraficoConformidade dados={conformidadeHistorica} periodo={periodo} />
+            <SectionConformidade periodo={periodo} escolaId={escolaId} />
           </Suspense>
         </div>
         <div>
-          <GraficoNCSeveridade
-            dadosSeveridade={distribuicaoNCs.porSeveridade}
-            dadosCategoria={distribuicaoNCs.porCategoria}
-          />
+          <Suspense fallback={<CardSkeleton />}>
+            <SectionNCSeveridade periodo={periodoNCs} escolaId={escolaId} />
+          </Suspense>
         </div>
       </div>
 
+      {/* Ranking + Heatmap — stream em paralelo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Suspense fallback={<RankingEscolasSkeleton />}>
-          <RankingEscolas escolas={rankingEscolas} />
+          <SectionRanking periodo={periodoRanking} />
         </Suspense>
         <Suspense fallback={<HeatmapSkeleton />}>
-          <HeatmapInspecoes periodo={periodo === '7d' || periodo === '60d' ? '30d' : (periodo as '30d' | '90d')} escolaId={escolaId} />
+          <HeatmapInspecoes periodo={periodoNCs} escolaId={escolaId} />
         </Suspense>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GraficoEvolucaoNCs dados={distribuicaoNCs.evolucao} />
-        <ItensMaisReprovados itens={itensMaisReprovados} totalInspecoes={kpis?.totalInspecoes ?? 0} />
-      </div>
+      {/* Evolução NCs + Itens mais reprovados — compartilham um fetch */}
+      <Suspense fallback={
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CardSkeleton /><CardSkeleton />
+        </div>
+      }>
+        <SectionEvolucaoItensMais periodo={periodoNCs} escolaId={escolaId} podVerKPIs={podVerEquipe} />
+      </Suspense>
 
       <Suspense fallback={null}>
         <ProximasInspecoes />
       </Suspense>
 
       {podVerEquipe && (
-        <AtividadeEquipe periodo="30d" escolaId={escolaId} />
+        <Suspense fallback={<CardSkeleton />}>
+          <AtividadeEquipe periodo="30d" escolaId={escolaId} />
+        </Suspense>
       )}
     </div>
   )

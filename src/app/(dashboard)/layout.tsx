@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { getServerUser } from '@/lib/auth'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
@@ -6,9 +7,54 @@ import { TrialBanner } from '@/components/dashboard/TrialBanner'
 import { InstallPWABanner } from '@/components/shared/InstallPWABanner'
 import { BannerNotificacoesPush } from '@/components/shared/BannerNotificacoesPush'
 import { AgendamentosHojeModal } from '@/components/shared/AgendamentosHojeModal'
-import { buscarAgendamentosHoje } from '@/actions/agendamentos.actions'
 import { Suspense } from 'react'
 import prisma from '@/lib/prisma'
+import { startOfDay, endOfDay } from 'date-fns'
+
+// Cache NC counts por 30 segundos — sidebar não precisa de tempo real
+const getNcCounts = (tenantId: string) =>
+  unstable_cache(
+    async () => {
+      const [ncCount, ncVencidas] = await Promise.all([
+        prisma.naoConformidade.count({
+          where: { tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
+        }),
+        prisma.naoConformidade.count({
+          where: {
+            tenantId,
+            prazoResolucao: { lt: new Date() },
+            status: { notIn: ['RESOLVIDA'] },
+          },
+        }),
+      ])
+      return { ncCount, ncVencidas }
+    },
+    [`nc-counts-${tenantId}`],
+    { revalidate: 30 }
+  )()
+
+// Cache agendamentos de hoje — TTL de 5 minutos, chave inclui data
+const getAgendamentosHoje = (tenantId: string) => {
+  const hoje = new Date().toISOString().slice(0, 10)
+  return unstable_cache(
+    async () => {
+      return prisma.agendamento.findMany({
+        where: {
+          tenantId,
+          ativo: true,
+          proximaExecucao: { gte: startOfDay(new Date()), lte: endOfDay(new Date()) },
+        },
+        include: {
+          escola: { select: { id: true, nome: true } },
+          checklist: { select: { id: true, nome: true, categoria: true } },
+        },
+        orderBy: { proximaExecucao: 'asc' },
+      })
+    },
+    [`agendamentos-hoje-${tenantId}-${hoje}`],
+    { revalidate: 300 }
+  )()
+}
 
 export default async function DashboardLayout({
   children,
@@ -19,24 +65,16 @@ export default async function DashboardLayout({
 
   let ncCount = 0
   let ncVencidas = 0
-  let agendamentosHoje: Awaited<ReturnType<typeof buscarAgendamentosHoje>> = []
+  let agendamentosHoje: Awaited<ReturnType<typeof getAgendamentosHoje>> = []
+
   try {
-    const [ncCountData, ncVencidasData, agendamentosData] = await Promise.all([
-      prisma.naoConformidade.count({
-        where: { tenantId: user.tenantId, status: { in: ['ABERTA', 'EM_ANDAMENTO'] } },
-      }),
-      prisma.naoConformidade.count({
-        where: {
-          tenantId: user.tenantId,
-          prazoResolucao: { lt: new Date() },
-          status: { notIn: ['RESOLVIDA'] },
-        },
-      }),
-      buscarAgendamentosHoje(),
+    const [counts, agendamentos] = await Promise.all([
+      getNcCounts(user.tenantId),
+      getAgendamentosHoje(user.tenantId),
     ])
-    ncCount = ncCountData
-    ncVencidas = ncVencidasData
-    agendamentosHoje = agendamentosData
+    ncCount = counts.ncCount
+    ncVencidas = counts.ncVencidas
+    agendamentosHoje = agendamentos
   } catch {
     // Non-critical; fail gracefully
   }
@@ -49,11 +87,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-[#F5F9FD] overflow-hidden">
-      {/* Sidebar — hidden on mobile for MERENDEIRA, shown for all on md+ */}
       <Sidebar user={userProps} ncCount={ncCount} ncVencidas={ncVencidas} />
 
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        {/* Header — hidden on mobile when showing full-screen inspection */}
         <Header user={userProps} ncCount={ncCount} />
 
         <Suspense fallback={null}>
@@ -65,16 +101,9 @@ export default async function DashboardLayout({
         </main>
       </div>
 
-      {/* Bottom tab bar — mobile only (md+ hidden via CSS in component) */}
       <MobileTabBar />
-
-      {/* PWA install prompt — client component, shows only on mobile */}
       <InstallPWABanner papel={user.papel} />
-
-      {/* Push notification banner — mobile only */}
       <BannerNotificacoesPush />
-
-      {/* Daily briefing — shows agendamentos for today on first app open */}
       <AgendamentosHojeModal agendamentos={agendamentosHoje} />
     </div>
   )

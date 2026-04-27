@@ -393,12 +393,11 @@ export async function buscarDistribuicaoNCs(filtros: {
   const whereNC = {
     ...tenantWhere(user),
     createdAt: { gte: inicio, lte: fim },
-    ...(filtros.escolaId
-      ? { inspecao: { escolaId: filtros.escolaId } }
-      : {}),
+    ...(filtros.escolaId ? { inspecao: { escolaId: filtros.escolaId } } : {}),
   }
 
-  const [porSeveridade, porCategoria, porEscola, evolucaoRaw] = await Promise.all([
+  // Uma única query com todos os campos necessários (antes eram 4 queries com includes aninhados)
+  const [porSeveridade, ncs] = await Promise.all([
     prisma.naoConformidade.groupBy({
       by: ['severidade'],
       where: whereNC,
@@ -406,15 +405,18 @@ export async function buscarDistribuicaoNCs(filtros: {
     }),
     prisma.naoConformidade.findMany({
       where: whereNC,
-      include: { inspecao: { include: { checklist: { select: { categoria: true } } } } },
-    }),
-    prisma.naoConformidade.findMany({
-      where: whereNC,
-      include: { inspecao: { include: { escola: { select: { nome: true } } } } },
-    }),
-    prisma.naoConformidade.findMany({
-      where: { ...tenantWhere(user), createdAt: { gte: inicio, lte: fim } },
-      select: { createdAt: true, resolvidaEm: true, status: true },
+      select: {
+        severidade: true,
+        createdAt: true,
+        resolvidaEm: true,
+        status: true,
+        inspecao: {
+          select: {
+            escola: { select: { nome: true } },
+            checklist: { select: { categoria: true } },
+          },
+        },
+      },
       orderBy: { createdAt: 'asc' },
     }),
   ])
@@ -425,59 +427,46 @@ export async function buscarDistribuicaoNCs(filtros: {
   const sevResult = severidadeOrdem.map((sev) => {
     const encontrado = porSeveridade.find((p) => p.severidade === sev)
     const total = encontrado?._count._all ?? 0
-    return {
-      severidade: sev,
-      total,
-      percentual: totalNCs > 0 ? Math.round((total / totalNCs) * 100) : 0,
-    }
+    return { severidade: sev, total, percentual: totalNCs > 0 ? Math.round((total / totalNCs) * 100) : 0 }
   })
 
-  // Por categoria
   const catMapa = new Map<CategoriaChecklist, number>()
-  porCategoria.forEach((nc) => {
-    const cat = nc.inspecao.checklist.categoria
-    catMapa.set(cat, (catMapa.get(cat) ?? 0) + 1)
-  })
-  const catResult = Array.from(catMapa.entries())
-    .map(([categoria, total]) => ({ categoria, total }))
-    .sort((a, b) => b.total - a.total)
-
-  // Por escola
   const escolaMapa = new Map<string, number>()
-  porEscola.forEach((nc) => {
-    const nome = nc.inspecao.escola.nome
-    escolaMapa.set(nome, (escolaMapa.get(nome) ?? 0) + 1)
-  })
-  const escolaResult = Array.from(escolaMapa.entries())
-    .map(([escola, total]) => ({ escola, total }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10)
-
-  // Evolução por dia
   const evolMapa = new Map<string, { abertas: number; resolvidas: number }>()
+
   const dias = parseInt(filtros.periodo)
   for (let i = 0; i < dias; i++) {
-    const d = format(subDays(new Date(), dias - 1 - i), 'yyyy-MM-dd')
-    evolMapa.set(d, { abertas: 0, resolvidas: 0 })
+    evolMapa.set(format(subDays(new Date(), dias - 1 - i), 'yyyy-MM-dd'), { abertas: 0, resolvidas: 0 })
   }
-  evolucaoRaw.forEach((nc) => {
+
+  for (const nc of ncs) {
+    const cat = nc.inspecao.checklist.categoria
+    catMapa.set(cat, (catMapa.get(cat) ?? 0) + 1)
+
+    const escola = nc.inspecao.escola.nome
+    escolaMapa.set(escola, (escolaMapa.get(escola) ?? 0) + 1)
+
     const dAberta = format(nc.createdAt, 'yyyy-MM-dd')
-    const atual = evolMapa.get(dAberta)
-    if (atual) atual.abertas++
+    const evolAberta = evolMapa.get(dAberta)
+    if (evolAberta) evolAberta.abertas++
+
     if (nc.resolvidaEm) {
       const dResolvida = format(nc.resolvidaEm, 'yyyy-MM-dd')
-      const res = evolMapa.get(dResolvida)
-      if (res) res.resolvidas++
+      const evolRes = evolMapa.get(dResolvida)
+      if (evolRes) evolRes.resolvidas++
     }
-  })
-
-  const evolucao = Array.from(evolMapa.entries()).map(([data, val]) => ({ data, ...val }))
+  }
 
   return {
     porSeveridade: sevResult,
-    porCategoria: catResult,
-    porEscola: escolaResult,
-    evolucao,
+    porCategoria: Array.from(catMapa.entries())
+      .map(([categoria, total]) => ({ categoria, total }))
+      .sort((a, b) => b.total - a.total),
+    porEscola: Array.from(escolaMapa.entries())
+      .map(([escola, total]) => ({ escola, total }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10),
+    evolucao: Array.from(evolMapa.entries()).map(([data, val]) => ({ data, ...val })),
   }
 }
 
