@@ -55,6 +55,7 @@ const itemSimNao = {
   unidade: null,
   opcoes: [],
   peso: 1,
+  secao: 'Geral',
   checklistId: 'cl-1',
 }
 

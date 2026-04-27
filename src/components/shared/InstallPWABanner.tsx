@@ -32,7 +32,7 @@ export function InstallPWABanner({ papel: _ }: Props) {
 
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [elegivel])
+  }, [])
 
   function dismiss() {
     setShow(false)
