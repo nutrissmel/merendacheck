@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 import prisma from './prisma'
 import { redirect } from 'next/navigation'
 import type { Papel } from '@prisma/client'
@@ -16,61 +17,61 @@ export type AuthUser = {
 }
 
 /**
- * Retorna o usuário autenticado ou null (sem redirecionar)
+ * Retorna o usuário autenticado ou null (sem redirecionar).
+ * Usa React cache() para deduplicar chamadas dentro do mesmo request —
+ * independente de quantas Server Actions chamarem getServerUser(), o
+ * Supabase e o banco são consultados UMA única vez por request.
+ * Usa getSession() (lê do cookie local) pois o middleware já validou o token.
  */
-export async function getServerUserOrNull(): Promise<AuthUser | null> {
+export const getServerUserOrNull = cache(async (): Promise<AuthUser | null> => {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
+        getAll() { return cookieStore.getAll() },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
-            // Ignorar se chamado de Server Component
-          }
+          } catch { /* Server Component — ignorar */ }
         },
       },
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession() lê o JWT do cookie sem HTTP round-trip ao Supabase.
+  // O middleware já chamou getUser() e validou o token neste request.
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return null
 
-  if (!user) return null
-
-  let usuario: Awaited<ReturnType<typeof prisma.usuario.findUnique>>
   try {
-    usuario = await prisma.usuario.findUnique({
-      where: { supabaseUserId: user.id },
+    const usuario = await prisma.usuario.findUnique({
+      where: { supabaseUserId: session.user.id },
+      select: {
+        id: true, tenantId: true, nome: true, email: true,
+        papel: true, primeiroAcesso: true, ativo: true,
+      },
     })
+    if (!usuario) return null
+
+    return {
+      id: usuario.id,
+      supabaseUserId: session.user.id,
+      tenantId: usuario.tenantId,
+      nome: usuario.nome,
+      email: usuario.email,
+      papel: usuario.papel,
+      primeiroAcesso: usuario.primeiroAcesso,
+      ativo: usuario.ativo,
+    }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
-    console.error('[getServerUserOrNull] Prisma error:', msg)
-    // Sign out so the middleware doesn't redirect back to /dashboard (which would loop)
-    try { await supabase.auth.signOut() } catch { /* ignore */ }
+    console.error('[getServerUserOrNull] Prisma error:', e instanceof Error ? e.message : String(e))
     return null
   }
-
-  if (!usuario) return null
-
-  return {
-    id: usuario.id,
-    supabaseUserId: user.id,
-    tenantId: usuario.tenantId,
-    nome: usuario.nome,
-    email: usuario.email,
-    papel: usuario.papel,
-    primeiroAcesso: usuario.primeiroAcesso,
-    ativo: usuario.ativo,
-  }
-}
+})
 
 /**
  * Retorna o usuário autenticado ou redireciona para /login
