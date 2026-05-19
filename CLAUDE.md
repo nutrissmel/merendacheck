@@ -6,6 +6,15 @@
 
 ---
 
+## Diretrizes de comportamento (aplicar em toda sessão)
+
+1. **Apenas as alterações solicitadas** — nenhuma mudança extra, refatoração ou "melhoria" não pedida.
+2. **Código simples desde o início** — sem over-engineering, abstrações prematuras ou complexidade desnecessária.
+3. **Esclarecer dúvidas antes de implementar** — se o pedido for ambíguo, perguntar primeiro; não assumir e corrigir depois.
+4. **PRs limpos e minimalistas** — diff deve conter somente o que foi pedido, sem limpezas superficiais.
+
+---
+
 ## Regras inegociáveis
 
 1. **Leia o SPEC.md primeiro.** Sempre. Sem exceção.

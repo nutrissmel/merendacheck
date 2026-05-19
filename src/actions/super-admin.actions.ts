@@ -135,6 +135,56 @@ export async function alterarPlanoMunicipioAction(
   }
 }
 
+export async function editarMunicipioAction(
+  tenantId: string,
+  data: { nome: string; estado: string; codigoIbge: string; nomeSecretaria?: string; emailInstitucional?: string },
+): Promise<{ sucesso: boolean; erro?: string }> {
+  try {
+    await requireSuperAdmin()
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        nome: data.nome,
+        estado: data.estado,
+        codigoIbge: data.codigoIbge,
+        nomeSecretaria: data.nomeSecretaria ?? null,
+        emailInstitucional: data.emailInstitucional ?? null,
+      },
+    })
+    revalidatePath('/super-admin/municipios')
+    return { sucesso: true }
+  } catch (err: any) {
+    return { sucesso: false, erro: err?.message ?? 'Erro ao editar município' }
+  }
+}
+
+export async function deletarMunicipioAction(
+  tenantId: string,
+): Promise<{ sucesso: boolean; erro?: string }> {
+  try {
+    await requireSuperAdmin()
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        _count: { select: { usuarios: true, escolas: true, checklistModelos: true, agendamentos: true, logsAuditoria: true } },
+      },
+    })
+    if (!tenant) return { sucesso: false, erro: 'Município não encontrado' }
+    const { usuarios, escolas, checklistModelos, agendamentos, logsAuditoria } = tenant._count
+    if (usuarios + escolas + checklistModelos + agendamentos + logsAuditoria > 0) {
+      return {
+        sucesso: false,
+        erro: `Não é possível excluir: ${usuarios} usuário(s) e ${escolas} escola(s) vinculados. Desative o município em vez disso.`,
+      }
+    }
+    await prisma.tenant.delete({ where: { id: tenantId } })
+    revalidatePath('/super-admin/municipios')
+    return { sucesso: true }
+  } catch (err: any) {
+    return { sucesso: false, erro: err?.message ?? 'Erro ao excluir município' }
+  }
+}
+
 export async function buscarStatsMunicipioAction(tenantId: string) {
   await requireSuperAdmin()
   const [usuarios, escolas, inspecoes, ncs, logs] = await Promise.all([

@@ -2,8 +2,14 @@
 
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, Search, Power, ChevronDown, Loader2, X, ShieldCheck, CheckCircle } from 'lucide-react'
-import { toggleMunicipioAction, alterarPlanoMunicipioAction, criarMunicipioAction } from '@/actions/super-admin.actions'
+import { Plus, Search, Power, ChevronDown, Loader2, X, ShieldCheck, CheckCircle, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import {
+  toggleMunicipioAction,
+  alterarPlanoMunicipioAction,
+  criarMunicipioAction,
+  editarMunicipioAction,
+  deletarMunicipioAction,
+} from '@/actions/super-admin.actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -22,20 +28,22 @@ type Municipio = {
 type DropdownInfo = { id: string; tipo: 'plano' | 'status'; rect: DOMRect } | null
 type Confirmacao = { id: string; nomeMunicipio: string; plano: string; status: string; label: string } | null
 
-const PLANOS = ['STARTER', 'MUNICIPAL', 'ESTADUAL', 'ENTERPRISE']
-const STATUS_OPTS = ['TRIAL', 'ATIVO', 'INATIVO', 'CANCELADO']
+const PLANOS = ['STARTER', 'CRESCIMENTO', 'MUNICIPAL', 'ENTERPRISE']
+const STATUS_OPTS = ['TRIAL', 'ATIVO', 'CANCELADO', 'INADIMPLENTE']
 
 const STATUS_STYLE: Record<string, string> = {
-  TRIAL:     'bg-amber-100 text-amber-700',
-  ATIVO:     'bg-green-100 text-green-700',
-  INATIVO:   'bg-red-100 text-red-700',
-  CANCELADO: 'bg-neutral-100 text-neutral-500',
+  TRIAL:        'bg-amber-100 text-amber-700',
+  ATIVO:        'bg-green-100 text-green-700',
+  INADIMPLENTE: 'bg-red-100 text-red-700',
+  CANCELADO:    'bg-neutral-100 text-neutral-500',
 }
 
 export function MunicipiosClient({ municipios }: { municipios: Municipio[] }) {
   const router = useRouter()
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [modalEditar, setModalEditar] = useState<Municipio | null>(null)
+  const [confirmacaoDelete, setConfirmacaoDelete] = useState<Municipio | null>(null)
   const [carregando, setCarregando] = useState<string | null>(null)
   const [dropdown, setDropdown] = useState<DropdownInfo>(null)
   const [confirmacao, setConfirmacao] = useState<Confirmacao>(null)
@@ -82,6 +90,19 @@ export function MunicipiosClient({ municipios }: { municipios: Municipio[] }) {
     setCarregando(null)
     if (res.sucesso) {
       toast.success(`${label} para ${nomeMunicipio}!`)
+      router.refresh()
+    } else {
+      toast.error(res.erro)
+    }
+  }
+
+  async function handleDelete(m: Municipio) {
+    setConfirmacaoDelete(null)
+    setCarregando(m.id + '-delete')
+    const res = await deletarMunicipioAction(m.id)
+    setCarregando(null)
+    if (res.sucesso) {
+      toast.success(`${m.nome} excluído`)
       router.refresh()
     } else {
       toast.error(res.erro)
@@ -166,22 +187,42 @@ export function MunicipiosClient({ municipios }: { municipios: Municipio[] }) {
                   </button>
                 </td>
 
-                {/* Toggle ativo */}
+                {/* Ações */}
                 <td className="px-3 py-3.5">
-                  <button
-                    onClick={() => handleToggle(m)}
-                    disabled={carregando === m.id + '-toggle'}
-                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                      m.ativo
-                        ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
-                    }`}
-                  >
-                    {carregando === m.id + '-toggle'
-                      ? <Loader2 size={12} className="animate-spin" />
-                      : <Power size={12} />}
-                    {m.ativo ? 'Desativar' : 'Ativar'}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setModalEditar(m)}
+                      disabled={!!carregando}
+                      title="Editar município"
+                      className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#EEF4FD] text-[#0E2E60] hover:bg-[#D5E3F0] transition-colors"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleToggle(m)}
+                      disabled={carregando === m.id + '-toggle'}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                        m.ativo
+                          ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                      }`}
+                    >
+                      {carregando === m.id + '-toggle'
+                        ? <Loader2 size={12} className="animate-spin" />
+                        : <Power size={12} />}
+                      {m.ativo ? 'Desativar' : 'Ativar'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmacaoDelete(m)}
+                      disabled={!!carregando}
+                      title="Excluir município"
+                      className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                    >
+                      {carregando === m.id + '-delete'
+                        ? <Loader2 size={12} className="animate-spin" />
+                        : <Trash2 size={13} />}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -236,8 +277,9 @@ export function MunicipiosClient({ municipios }: { municipios: Municipio[] }) {
       )}
 
       {modalAberto && <ModalNovoMunicipio onClose={() => setModalAberto(false)} />}
+      {modalEditar && <ModalEditarMunicipio municipio={modalEditar} onClose={() => setModalEditar(null)} />}
 
-      {/* Modal de confirmação */}
+      {/* Modal confirmação plano/status */}
       {confirmacao && createPortal(
         <>
           <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setConfirmacao(null)} />
@@ -281,6 +323,58 @@ export function MunicipiosClient({ municipios }: { municipios: Municipio[] }) {
                 >
                   <CheckCircle size={14} />
                   Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </>,
+        document.body,
+      )}
+
+      {/* Modal confirmação exclusão */}
+      {confirmacaoDelete && createPortal(
+        <>
+          <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setConfirmacaoDelete(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm pointer-events-auto">
+              <div className="px-6 py-5 border-b border-[#EEF4FD]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={20} className="text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-[#0F1B2D] font-heading">Excluir município</h2>
+                    <p className="text-xs text-[#5A7089]">Esta ação é irreversível</p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 py-5 space-y-3">
+                <p className="text-sm text-[#0F1B2D]">
+                  Excluir permanentemente o município:
+                </p>
+                <div className="bg-[#F5F9FD] rounded-xl px-4 py-3 border border-[#EEF4FD]">
+                  <p className="font-semibold text-[#0F1B2D] text-sm">{confirmacaoDelete.nome}</p>
+                  <p className="text-xs text-[#5A7089] mt-0.5">
+                    {confirmacaoDelete._count.usuarios} usuário(s) · {confirmacaoDelete._count.escolas} escola(s)
+                  </p>
+                </div>
+                <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  Só é possível excluir municípios sem dados vinculados. Se houver usuários ou escolas, desative-o em vez disso.
+                </p>
+              </div>
+              <div className="px-6 pb-5 flex gap-3">
+                <button
+                  onClick={() => setConfirmacaoDelete(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-[#D5E3F0] text-sm text-[#5A7089] hover:bg-[#F5F9FD] transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleDelete(confirmacaoDelete)}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={14} />
+                  Excluir
                 </button>
               </div>
             </div>
@@ -361,6 +455,89 @@ function ModalNovoMunicipio({ onClose }: { onClose: () => void }) {
             >
               {carregando && <Loader2 size={14} className="animate-spin" />}
               Criar município
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function ModalEditarMunicipio({ municipio, onClose }: { municipio: Municipio; onClose: () => void }) {
+  const router = useRouter()
+  const [carregando, setCarregando] = useState(false)
+  const [form, setForm] = useState({
+    nome: municipio.nome,
+    estado: municipio.estado,
+    codigoIbge: municipio.codigoIbge,
+    nomeSecretaria: '',
+    emailInstitucional: '',
+  })
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  async function handleSalvar() {
+    if (!form.nome || !form.estado || !form.codigoIbge) {
+      toast.error('Preencha nome, estado e código IBGE')
+      return
+    }
+    setCarregando(true)
+    const res = await editarMunicipioAction(municipio.id, form)
+    setCarregando(false)
+    if (res.sucesso) {
+      toast.success('Município atualizado!')
+      router.refresh()
+      onClose()
+    } else {
+      toast.error(res.erro ?? 'Erro ao atualizar')
+    }
+  }
+
+  const campos = [
+    { label: 'Nome do município *', key: 'nome' as const, placeholder: 'ex: Luziânia' },
+    { label: 'Estado (UF) *', key: 'estado' as const, placeholder: 'ex: GO' },
+    { label: 'Código IBGE *', key: 'codigoIbge' as const, placeholder: 'ex: 5212501' },
+    { label: 'Nome da secretaria', key: 'nomeSecretaria' as const, placeholder: 'ex: SMED' },
+    { label: 'E-mail institucional', key: 'emailInstitucional' as const, placeholder: 'contato@prefeitura.gov.br' },
+  ]
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#EEF4FD]">
+            <h2 className="font-bold text-[#0F1B2D] font-heading">Editar município</h2>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#D5E3F0] text-[#5A7089] hover:bg-[#EEF4FD]">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="px-6 py-5 space-y-4">
+            {campos.map(({ label, key, placeholder }) => (
+              <div key={key}>
+                <label className="block text-xs font-semibold text-[#5A7089] mb-1">{label}</label>
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  value={form[key]}
+                  onChange={set(key)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#D5E3F0] text-sm focus:outline-none focus:border-[#0E2E60]"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="px-6 pb-5 flex gap-3">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#D5E3F0] text-sm text-[#5A7089] hover:bg-[#F5F9FD]">
+              Cancelar
+            </button>
+            <button
+              onClick={handleSalvar}
+              disabled={carregando}
+              className="flex-1 py-2.5 rounded-xl bg-[#0E2E60] text-white text-sm font-semibold hover:bg-[#133878] disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {carregando && <Loader2 size={14} className="animate-spin" />}
+              Salvar alterações
             </button>
           </div>
         </div>
