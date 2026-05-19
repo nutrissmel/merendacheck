@@ -21,6 +21,8 @@ import {
   Download,
   WifiOff,
   ChevronRight,
+  Sparkles,
+  Globe,
 } from "lucide-react"
 
 const FEATURES = [
@@ -28,25 +30,33 @@ const FEATURES = [
     icon: ClipboardCheck,
     title: "Checklists PNAE",
     description:
-      "Critérios técnicos pré-configurados conforme as normas do Programa Nacional de Alimentação Escolar. Execute inspeções completas com validação passo a passo.",
+      "Critérios técnicos pré-configurados conforme as normas do PNAE. Templates prontos para reutilizar, itens com drag-and-drop e múltiplos tipos de resposta.",
     color: "bg-blue-50 text-blue-800",
-    items: ["Critérios FNDE/PNAE incluídos", "Múltiplas seções por checklist", "Fotos e observações por item", "Assinatura digital do responsável"],
+    items: ["Templates prontos para reutilizar", "Drag-and-drop para reordenar itens", "Fotos, escala e múltipla escolha", "Assinatura digital do responsável"],
   },
   {
     icon: BarChart3,
     title: "Dashboard Analítico",
     description:
-      "Visualize em tempo real a conformidade de toda a rede municipal. Gráficos de tendência, ranking de escolas e alertas automáticos.",
+      "Visualize em tempo real a conformidade de toda a rede municipal. Heatmap, ranking de escolas, itens mais reprovados e score automático por inspeção.",
     color: "bg-green-50 text-green-700",
-    items: ["Conformidade histórica e heatmap", "Ranking das escolas monitoradas", "KPIs atualizados em tempo real", "Filtros por escola e período"],
+    items: ["Score CONFORME / ATENÇÃO / REPROVADO", "Heatmap + ranking de escolas", "Itens mais reprovados por categoria", "KPIs e atividade da equipe em tempo real"],
   },
   {
     icon: AlertTriangle,
     title: "Gestão de Não Conformidades",
     description:
-      "Registre NCs com severidade, prazo de resolução e responsável. Acompanhe o ciclo completo de abertura até resolução com histórico auditável.",
+      "NCs geradas automaticamente ao finalizar inspeção. Ações corretivas com responsável, prazo e evidência. Ciclo completo de abertura até resolução auditável.",
     color: "bg-red-50 text-red-600",
-    items: ["Severidade: Crítica, Alta, Média, Baixa", "Prazo automático por severidade", "Notificações push de vencimento", "Histórico completo de ações"],
+    items: ["NCs automáticas por item crítico", "Ações corretivas com responsável e prazo", "Notificações push de vencimento", "Histórico de ações e evidências"],
+  },
+  {
+    icon: Sparkles,
+    title: "Análise por Inteligência Artificial",
+    description:
+      "Integração com o Gemini (Google AI) para análises automáticas de tendências, identificação de padrões críticos e sugestões de ações nas inspeções.",
+    color: "bg-violet-50 text-violet-700",
+    items: ["Análise de tendências de inspeções", "Identificação de padrões críticos", "Sugestões automáticas de ações", "Integrado ao Google Gemini"],
   },
   {
     icon: Calendar,
@@ -54,15 +64,15 @@ const FEATURES = [
     description:
       "Programe inspeções recorrentes e nunca perca uma visita. O sistema calcula automaticamente a próxima execução e notifica toda a equipe.",
     color: "bg-amber-50 text-amber-700",
-    items: ["Recorrência configurável", "Notificação prévia automática", "Controle de pendências do dia", "Histórico de execuções"],
+    items: ["Frequência: diária, semanal, mensal", "Notificação prévia automática", "Controle de pendências do dia", "Histórico de execuções"],
   },
   {
     icon: FileText,
     title: "Relatórios Profissionais",
     description:
-      "Exporte relatórios técnicos em PDF ou Excel com um clique. Layouts prontos para prestação de contas à FNDE e ao Conselho de Alimentação Escolar.",
+      "PDF, Excel e relatório FNDE com um clique. Exportação de NCs e usuários em CSV. Relatório mensal automático enviado por e-mail.",
     color: "bg-purple-50 text-purple-700",
-    items: ["PDF e Excel em 1 clique", "Layout técnico para FNDE", "Filtros por período e escola", "Histórico completo de inspeções"],
+    items: ["PDF técnico para FNDE/CAE", "Excel + CSV de NCs e usuários", "Relatório mensal automático por e-mail", "Filtros por período, escola e status"],
   },
   {
     icon: WifiOff,
@@ -70,7 +80,15 @@ const FEATURES = [
     description:
       "Realize inspeções mesmo sem conexão à internet. Os dados sincronizam automaticamente quando a rede é restaurada — perfeito para escolas rurais.",
     color: "bg-neutral-100 text-neutral-900",
-    items: ["PWA instalável no celular", "Sincronização automática", "Funciona em redes 2G/3G", "Dados protegidos localmente"],
+    items: ["PWA instalável no celular", "Sincronização automática ao reconectar", "Funciona em redes 2G/3G", "Dados protegidos localmente (IndexedDB)"],
+  },
+  {
+    icon: Globe,
+    title: "API & Integrações",
+    description:
+      "Integre o MerendaCheck com outros sistemas municipais. API REST com chave por município e webhooks configuráveis para eventos em tempo real.",
+    color: "bg-cyan-50 text-cyan-700",
+    items: ["API Key exclusiva por município", "Webhooks para eventos do sistema", "Integração com sistemas municipais", "Convites de equipe por e-mail"],
   },
 ]
 
@@ -98,22 +116,22 @@ const STEPS = [
 const ROLES = [
   {
     role: "Administrador Municipal",
-    desc: "Visão completa de todas as escolas, dashboard analítico, gestão de equipe e relatórios consolidados do município.",
+    desc: "Visão completa de todas as escolas, dashboard analítico, gestão de equipe com convites por e-mail, relatórios e configurações do município.",
     icon: Building2,
   },
   {
     role: "Nutricionista",
-    desc: "Criação e gestão de checklists, execução de inspeções, acompanhamento de NCs e geração de relatórios técnicos.",
+    desc: "Criação de checklists com templates, execução de inspeções com geolocalização, acompanhamento de NCs e geração de relatórios FNDE.",
     icon: ClipboardCheck,
   },
   {
     role: "Diretor de Escola",
-    desc: "Acompanhamento em tempo real das inspeções e não conformidades da própria escola, sem acesso a outras unidades.",
+    desc: "Acompanhamento em tempo real das inspeções, NCs e checklists da própria escola, sem acesso a outras unidades.",
     icon: School,
   },
   {
     role: "Merendeira",
-    desc: "Execução guiada de checklists diários com interface simplificada, otimizada para uso em tablet e celular.",
+    desc: "Execução guiada de inspeções com interface simplificada, funciona offline, otimizada para tablet e celular.",
     icon: Users,
   },
 ]
@@ -185,9 +203,7 @@ export default function LandingPage() {
               </h1>
 
               <p className="text-xl text-blue-100 leading-relaxed max-w-lg">
-                Da inspeção ao relatório final — tudo em uma plataforma. Conformidade
-                com o PNAE, gestão de não conformidades e dashboard analítico para
-                toda a rede escolar.
+                Da inspeção ao relatório FNDE — tudo em uma plataforma. Checklists com IA, score automático, gestão de não conformidades e dashboard analítico para toda a rede escolar.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -497,10 +513,11 @@ export default function LandingPage() {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    "Autenticação em 2 fatores (2FA)",
+                    "Autenticação em 2 fatores (2FA/TOTP)",
                     "Criptografia end-to-end em trânsito",
-                    "Auditoria de todas as ações do sistema",
+                    "Auditoria completa de todas as ações",
                     "Dados armazenados no Brasil (LGPD)",
+                    "Exportação e exclusão de dados (LGPD Art. 18)",
                     "Controle granular de permissões por papel",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm">
