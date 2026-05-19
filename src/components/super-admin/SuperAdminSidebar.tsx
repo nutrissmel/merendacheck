@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Building2, Users, ScrollText,
   LogOut, ShieldCheck, ChevronRight, ClipboardCheck,
-  AlertTriangle, CreditCard, Settings,
+  AlertTriangle, CreditCard, Settings, ExternalLink,
 } from 'lucide-react'
 import { logoutAction } from '@/actions/auth.actions'
 import { cn } from '@/lib/utils'
@@ -91,6 +91,13 @@ export function SuperAdminSidebar({ user }: { user: { nome: string; email: strin
           <p className="text-xs font-semibold text-white truncate">{user.nome}</p>
           <p className="text-[11px] text-white/40 truncate">{user.email}</p>
         </div>
+        <Link
+          href="/dashboard"
+          className="flex w-full items-center gap-2 px-3 py-2 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors mb-1"
+        >
+          <ExternalLink size={14} />
+          Ir para o sistema
+        </Link>
         <form action={logoutAction}>
           <button
             type="submit"
