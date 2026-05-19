@@ -15,6 +15,7 @@ import {
   CreditCard,
   LogOut,
   CloudOff,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Logo } from '@/components/shared/Logo'
@@ -174,6 +175,16 @@ export function SidebarContent({ user, ncCount, ncVencidas = 0, onNavClick }: Si
 
       {/* Footer do usuário */}
       <div className="border-t border-white/10 p-3 shrink-0">
+        {papel === 'SUPER_ADMIN' && (
+          <Link
+            href="/super-admin"
+            onClick={onNavClick}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-amber-400 hover:bg-amber-400/10 transition-colors text-sm font-semibold mb-1"
+          >
+            <ShieldCheck size={16} className="shrink-0" />
+            Painel Super Admin
+          </Link>
+        )}
         <Link
           href="/perfil"
           onClick={onNavClick}
