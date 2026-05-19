@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getTenantId } from "@/lib/auth";
+import { getTenantId, getServerUser } from "@/lib/auth";
 import { trialAtivo } from "@/lib/plano";
 import Link from "next/link";
 import { AlertTriangle, Clock, ArrowRight } from "lucide-react";
@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 
 export async function TrialBanner() {
   try {
+  const user = await getServerUser();
+  if (user.papel === 'SUPER_ADMIN') return null;
+
   const tenantId = await getTenantId();
   if (!tenantId) return null;
 
